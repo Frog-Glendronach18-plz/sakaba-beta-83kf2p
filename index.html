@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>酒場ドラフト戦記 verベータ1.02</title>
+<meta name="description" content="仲間を雇って配置し、俯瞰マップの自動戦闘を勝ち抜くオートバトラー『酒場ドラフト戦記』">
+<meta name="theme-color" content="#241710">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="酒場戦記">
+<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="round-badge"><small>ラウンド</small><span id="roundNum">1</span><span id="roundMax">/10</span></div>
+    <div id="hearts"></div>
+    <div id="vault">
+      <span id="goldNum">0</span>
+      <span id="pips"></span>
+      <span id="interestLabel">+0<small>利子</small></span>
+    </div>
+    <button id="wgBtn" title="戦況ゲージ表示切替">📊</button>
+    <button id="evChip" style="display:none"></button>
+    <button id="recBtn">🏆</button>
+    <button id="helpBtn">❓</button>
+    <button id="muteBtn">🔊</button>
+  </div>
+
+  <div id="boardWrap">
+    <div id="boardLabel"><span id="enemyLabel">敵陣 — 次の対戦相手</span><span id="teamCount">自陣（下4行に配置）</span></div>
+    <div id="warGauge"><div id="wgFill"></div><span id="wgAllyPct"></span><span id="wgFoePct"></span></div>
+    <div id="rumorLine"></div>
+    <div id="board">
+      <svg id="predictLayer" viewBox="0 0 7 9" preserveAspectRatio="none"></svg>
+      <svg id="predictHeads" viewBox="0 0 7 9" preserveAspectRatio="none"></svg>
+      <div id="zoneHint"></div>
+    </div>
+  </div>
+
+  <div id="infoBar"></div>
+  <div id="synergy"></div>
+
+  <div id="shopArea">
+    <div id="shopTitle"><span id="shopName">🍺 酒場の募兵</span><span id="incomeNote"></span></div>
+    <div id="tierOdds"></div>
+    <div id="shopCards"></div>
+    <div id="battleLog"></div>
+    <div id="shopBtns">
+      <button class="btn" id="rerollBtn">🎲 1G</button>
+      <button class="btn" id="lockModeBtn" title="取り置き">🔒</button>
+      <button class="btn" id="capBtn">👥 +1枠</button>
+      <button class="btn" id="sellBtn">💰 売却</button>
+      <button class="btn" id="fightBtn">⚔️ 戦闘開始</button>
+    </div>
+  </div>
+  <div id="tutBox"></div>
+</div>
+
+<div id="fx"></div>
+<div id="slam"><div id="slamText"></div></div>
+<div id="overlay"><div id="panel"></div></div>
+<div id="biomeBanner"></div>
+<div id="toast"></div>
+
+<!-- 読み込み順は依存関係どおり。最後の ui.js がイベント登録とゲーム起動を行う -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+<script src="./js/game.min.js"></script>
+</body>
+</html>

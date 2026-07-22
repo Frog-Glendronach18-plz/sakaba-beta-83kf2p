@@ -1,0 +1,17 @@
+{
+  "name": "酒場ドラフト戦記(ベータ版)",
+  "short_name": "酒場戦記（ベータ）",
+  "description": "仲間を雇って配置し、俯瞰マップの自動戦闘を勝ち抜くオートバトラー",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#241710",
+  "theme_color": "#241710",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
