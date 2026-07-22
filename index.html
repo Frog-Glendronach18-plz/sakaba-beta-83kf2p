@@ -6,6 +6,27 @@
 <title>酒場ドラフト戦記 verベータ1.02</title>
 <meta name="description" content="仲間を雇って配置し、俯瞰マップの自動戦闘を勝ち抜くオートバトラー『酒場ドラフト戦記』">
 <meta name="theme-color" content="#241710">
+
+<!-- ═══ SNSシェア用（OGP / Twitter Card）═══
+     ⚠️ og:url と og:image は「絶対URL」でないとX等のクローラーが読めないため、
+     相対パスにせず公開URL（https://frog-glendronach18-plz.github.io/sakaba-beta-83kf2p/）を直書きする。
+     公開先を引っ越したら下の og:url / og:image / twitter:image の3つを書き換えること。
+     画像を差し替えたらX Card Validator等でキャッシュを更新すると反映が早い。 -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="酒場ドラフト戦記">
+<meta property="og:title" content="酒場ドラフト戦記 — 仲間を雇い、配置し、あとは見守るだけ。">
+<meta property="og:description" content="ブラウザだけで遊べる俯瞰マップの自動戦闘オートバトラー。10ラウンドで魔王を討て。無料・インストール不要・スマホ対応。">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:url" content="https://frog-glendronach18-plz.github.io/sakaba-beta-83kf2p/">
+<meta property="og:image" content="https://frog-glendronach18-plz.github.io/sakaba-beta-83kf2p/img/ogp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="酒場ドラフト戦記のタイトルと盤面イメージ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="酒場ドラフト戦記 — 仲間を雇い、配置し、あとは見守るだけ。">
+<meta name="twitter:description" content="ブラウザだけで遊べる俯瞰マップの自動戦闘オートバトラー。10ラウンドで魔王を討て。無料・インストール不要・スマホ対応。">
+<meta name="twitter:image" content="https://frog-glendronach18-plz.github.io/sakaba-beta-83kf2p/img/ogp.png">
+
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
@@ -69,6 +90,23 @@
 <div id="toast"></div>
 
 <!-- 読み込み順は依存関係どおり。最後の ui.js がイベント登録とゲーム起動を行う -->
+<script src="./js/data.js"></script>
+<script src="./js/audio.js"></script>
+<script src="./js/bgm.js"></script>
+<script src="./js/state.js"></script>
+<script src="./js/shop.js"></script>
+<script src="./js/enemies.js"></script>
+<script src="./js/field.js"></script>
+<script src="./js/team.js"></script>
+<script src="./js/battle.js"></script>
+<script src="./js/rounds.js"></script>
+<script src="./js/render.js"></script>
+<script src="./js/fx.js"></script>
+<script src="./js/pwa.js"></script>
+<script src="./js/resume.js"></script>
+<script src="./js/arena.js"></script>
+<script src="./js/stats.js"></script>
+<script src="./js/ui.js"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -76,6 +114,5 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-<script src="./js/game.min.js"></script>
 </body>
 </html>
