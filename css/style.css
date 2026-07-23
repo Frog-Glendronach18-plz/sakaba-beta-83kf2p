@@ -1121,13 +1121,16 @@
     background: #ffffff55; border: 1px solid var(--gold-deep); border-radius: 8px;
     padding: 7px 10px;
   }
+  /* 見出し＋📥ボタン: float だと直下の名簿（overflow による BFC）が float を避けて細くなるので flex で並べる */
+  #panel .arena-rosterhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; }
   #panel .arena-roster {
     max-height: 30vh; overflow-y: auto; text-align: left;
     background: #00000010; border-radius: 10px; padding: 5px 8px; margin-bottom: 11px;
   }
   #panel .arena-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px dashed #00000018; }
   #panel .arena-row:last-child { border-bottom: none; }
-  #panel .arena-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  /* min-width は small の ellipsis を効かせるため小さく、ただし軍団名が 1 文字ずつ折り返すほど潰れない値に */
+  #panel .arena-row-main { flex: 1; min-width: 72px; display: flex; flex-direction: column; }
   #panel .arena-row-main b { font-size: 12px; }
   #panel .arena-row-main small { font-size: 12px; letter-spacing: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #panel .arena-row-date { font-size: 9.5px; color: #8a6b3a; flex: 0 0 auto; }

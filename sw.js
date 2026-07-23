@@ -3,7 +3,7 @@
    ファイルを更新して公開するときは CACHE_VERSION を上げること（古いキャッシュは自動削除される） */
 'use strict';
 
-const CACHE_VERSION = 'sakaba-v1.13.0';  // アプリ本体（コード変更で上げる）
+const CACHE_VERSION = 'sakaba-v1.14.0';  // アプリ本体（コード変更で上げる）
 const MEDIA_CACHE = 'sakaba-media-v2';   // BGM（音源を差し替えたときだけ上げる）
 const FONT_CACHE = 'sakaba-fonts-v1';
 
