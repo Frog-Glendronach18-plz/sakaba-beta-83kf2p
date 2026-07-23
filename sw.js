@@ -3,7 +3,7 @@
    ファイルを更新して公開するときは CACHE_VERSION を上げること（古いキャッシュは自動削除される） */
 'use strict';
 
-const CACHE_VERSION = 'sakaba-v1.14.0';  // アプリ本体（コード変更で上げる）
+const CACHE_VERSION = 'sakaba-v1.15.0';  // アプリ本体（コード変更で上げる）
 const MEDIA_CACHE = 'sakaba-media-v2';   // BGM（音源を差し替えたときだけ上げる）
 const FONT_CACHE = 'sakaba-fonts-v1';
 
@@ -24,6 +24,7 @@ const MEDIA = [
    ベストエフォート＝ファイルが無くてもインストールは失敗しない。
    ※列挙し忘れてもオンライン時は通常キャッシュで表示される（オフライン初回のみ欠ける） */
 const UNIT_ART = [
+  './img/map_sample.png',   // 盤面背景アトラス（4×4）。大きめなのでベストエフォート（失敗してもオンライン時に取得）
   // './img/units/sword.png',
 ];
 
