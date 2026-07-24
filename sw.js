@@ -3,7 +3,7 @@
    ファイルを更新して公開するときは CACHE_VERSION を上げること（古いキャッシュは自動削除される） */
 'use strict';
 
-const CACHE_VERSION = 'sakaba-v1.17.0';  // アプリ本体（コード変更で上げる）
+const CACHE_VERSION = 'sakaba-v1.20.0';  // アプリ本体（コード変更で上げる）
 const MEDIA_CACHE = 'sakaba-media-v2';   // BGM（音源を差し替えたときだけ上げる）
 const FONT_CACHE = 'sakaba-fonts-v1';
 
@@ -25,7 +25,16 @@ const MEDIA = [
    ※列挙し忘れてもオンライン時は通常キャッシュで表示される（オフライン初回のみ欠ける） */
 const UNIT_ART = [
   './img/map_sample2.webp',   // 盤面背景アトラス（4×4・WebP）。ベストエフォート（失敗してもオンライン時に取得）
-  // './img/units/sword.png',
+  // ドット絵ユニット（全身立ち絵）。定義に img: を足すたびここにも列挙する（現在は味方18体・仮絵）
+  './img/units/sword.png', './img/units/guard.png', './img/units/appr.png', './img/units/pedl.png',
+  './img/units/prayr.png', './img/units/relic.png', './img/units/knight.png', './img/units/blade.png',
+  './img/units/alchm.png', './img/units/clerc.png', './img/units/golem.png', './img/units/carav.png',
+  './img/units/genrl.png', './img/units/amage.png', './img/units/proph.png', './img/units/tamer.png',
+  './img/units/fortr.png', './img/units/tycon.png',
+  // 敵（雑魚5・エース3・ボス魔王）の仮ドット絵
+  './img/units/e_gobl.png', './img/units/e_wolf.png', './img/units/e_arch.png', './img/units/e_scor.png',
+  './img/units/e_spid.png', './img/units/e_dragon.png', './img/units/e_ogre.png', './img/units/e_darkmage.png',
+  './img/units/e_maou.png',
 ];
 
 const APP_SHELL = [

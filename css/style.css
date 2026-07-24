@@ -1231,6 +1231,32 @@
   .uimg-s { width: 15px; height: 15px; display: inline-block; vertical-align: -3px; }  /* 情報バー等の行内 */
   .uimg-fly { width: 30px; height: 30px; }                     /* 購入時のフライ演出 */
 
+  /* ── B方式: 全身立ち絵ユニット（img: を持つと hasimg が付く）──
+     円メダルを外し、足を接地させて地形に立たせる。陣営（味方/敵）は
+     メダル復活の代わりに「足元の影を薄く色づけ」して識別する。 */
+  .tok.hasimg { margin-top: -31px; }                 /* 立ち絵を上へ伸ばし、足元を従来の接地点に合わせる */
+  .tok.hasimg .tport {
+    width: 34px; height: 40px;
+    background: none; border: none; box-shadow: none; border-radius: 0;
+    align-items: flex-end;                            /* 足を下辺に接地 */
+    overflow: visible;
+  }
+  #board.arena .tok.hasimg .tport { background: none; }   /* 闘技場の陣営ディスク(id付き)を無効化 */
+  .tok.hasimg .uimg {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    object-position: bottom center;                   /* 足元基準で拡大縮小 */
+    filter: drop-shadow(0 1px 0 #00000066);           /* 地際を軽く締める */
+  }
+  .tok.hasimg.boss { margin-top: -38px; }
+  .tok.hasimg.boss .tport { height: 48px; }
+  /* 陣営識別: 足元の影を薄く染める（円メダルは復活させない） */
+  .tok.hasimg .tsh { bottom: 0; width: 24px; height: 7px; margin-left: -12px; }  /* 立ち絵の足元にぴたりと影を置く */
+  .tok.hasimg.foe .tsh { background: radial-gradient(ellipse at center, #d0503366, transparent 70%); }
+  #board.arena .tok.hasimg:not(.foe) .tsh { background: radial-gradient(ellipse at center, #4a90d266, transparent 70%); }
+  #board.arena .tok.hasimg.foe .tsh { background: radial-gradient(ellipse at center, #d0503366, transparent 70%); }
+  .tok.hasimg.selected .uimg { filter: drop-shadow(0 0 3px #ffe08a) drop-shadow(0 1px 0 #00000066); }
+
   /* ── 情報バーの系統チップ（タップした駒のシナジー） ── */
   #infoBar .ib-traits { display: inline-flex; gap: 2px; margin: 0 3px; vertical-align: 1px; }
   #infoBar .ctrait { font-size: 8px; padding: 1px 5px; }
