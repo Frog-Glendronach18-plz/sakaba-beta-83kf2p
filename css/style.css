@@ -1326,7 +1326,15 @@
      ここに書いたセレクタは全て html.lay-land 配下＝縦向きには一切影響しない。
      ※ 盤面は7列×9行の「縦長」なので、横持ちの画面（高さが足りない）では
        盤も駒も縦持ちより小さくなる。広くなるのはタブレット/PCの横。
+
+     ★安全網★ 以下は全て @media (min-width: 600px) の中にある。
+     2カラムに足りない幅では「1つもマッチしない」＝自動的に縦1カラムのまま。
+     （これが無いと、設定で「横」を強制した狭い端末や、回転直後に実寸とメディアクエリが
+       ずれる iOS で、盤面カラムが 390-20-8-300 = 62px に潰れる。
+       JS側(render.js LAND_MIN_W)にも同じ幅のガードがあり二重化している。
+       閾値を変えるときは両方揃えること）
      ═════════════════════════════════════════════════════════════════ */
+  @media (min-width: 600px) {
   html.lay-land { --side-w: clamp(300px, 38vw, 400px); }
   html.lay-land #app {
     max-width: none;
@@ -1416,9 +1424,12 @@
   html.lay-land #biomeBanner { left: calc((100% - var(--side-w)) / 2); }
   html.lay-land #toast { left: calc((100% - var(--side-w)) / 2); bottom: 8%; }
 
+  }  /* ← @media (min-width: 600px) の終わり（横向きレイアウト本体） */
+
   /* ── 高さが極端に低い横持ち（スマホ）: 盤の上の帯を盤に重ねて高さを稼ぐ ──
-     #boardLabel / #warGauge はどちらも pointer-events:none・z-index:3 なので重ねられる */
-  @media (max-height: 480px) {
+     #boardLabel / #warGauge はどちらも pointer-events:none・z-index:3 なので重ねられる。
+     こちらも min-width 条件を必ず併記する（@media はネストできないため and で書く） */
+  @media (min-width: 600px) and (max-height: 480px) {
     html.lay-land #app { padding-top: 4px; padding-bottom: calc(4px + env(safe-area-inset-bottom)); }
     html.lay-land #boardLabel { position: absolute; top: 15px; left: 0; right: 0; }
     html.lay-land #warGauge   { position: absolute; top: 0; left: 0; right: 0; margin: 0; }

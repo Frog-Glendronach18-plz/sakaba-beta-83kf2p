@@ -23,7 +23,8 @@
      ビルド後の index.html が壊れる（本体JSが読み込まれなくなる） */
 try {
   var m = localStorage.getItem('sakabaLayoutMode_v1') || 'auto';
-  if (m === 'landscape' || (m === 'auto' && matchMedia('(orientation: landscape) and (min-width: 600px)').matches))
+  var wide = innerWidth >= 600;   // 実測幅でも縛る（render.js の LAND_MIN_W と揃えること）
+  if (wide && (m === 'landscape' || (m === 'auto' && matchMedia('(orientation: landscape) and (min-width: 600px)').matches)))
     document.documentElement.classList.add('lay-land');
 } catch (e) {}
 </script>

@@ -3,7 +3,7 @@
    ファイルを更新して公開するときは CACHE_VERSION を上げること（古いキャッシュは自動削除される） */
 'use strict';
 
-const CACHE_VERSION = 'sakaba-v1.24.0';  // アプリ本体（コード変更で上げる）
+const CACHE_VERSION = 'sakaba-v1.26.0';  // アプリ本体（コード変更で上げる）
 const MEDIA_CACHE = 'sakaba-media-v2';   // BGM（音源を差し替えたときだけ上げる）
 const FONT_CACHE = 'sakaba-fonts-v1';
 
@@ -125,6 +125,30 @@ self.addEventListener('fetch', (e) => {
   // 206 応答は Cache API に保存できず、無理に保存すると再生が壊れるため。
   if (req.headers.has('range')) {
     e.respondWith(fetch(req).catch(() => caches.match(req, { ignoreVary: true })));
+    return;
+  }
+
+  // アプリのコード(js/css): ネットワーク優先。
+  // stale-while-revalidate のままだと、ナビゲーションだけ network-first なので
+  // 「index.html は新しいのに game.min.js / style.css は1回前の版」というバージョン混在が起きる。
+  // （実際にこれで、新しいCSSが無いまま横向きにされて盤面が潰れる事故が起きた）
+  // オフライン時はキャッシュへフォールバックするので、従来どおり圏外でも遊べる。
+  if (url.origin === self.location.origin &&
+      (url.pathname.includes('/js/') || url.pathname.includes('/css/'))) {
+    // cache:'no-cache' が要（素の fetch(req) はリクエスト既定のHTTPキャッシュを使うため、
+    // ネットワーク優先にしても古い応答が返ってしまう＝この対策の意味が無くなる）。
+    // no-cache は「毎回サーバに確認、変更が無ければ304」なので通信量は増えない
+    e.respondWith(
+      fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' })
+        .then((res) => {
+          if (res.status === 200) {
+            const copy = res.clone();
+            caches.open(CACHE_VERSION).then((c) => c.put(req, copy)).catch(() => {});
+          }
+          return res;
+        })
+        .catch(() => caches.match(req, { ignoreVary: true }))
+    );
     return;
   }
 
