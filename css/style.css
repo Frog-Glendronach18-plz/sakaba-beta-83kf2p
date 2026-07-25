@@ -226,7 +226,9 @@
     transition: left .2s cubic-bezier(.3,.8,.4,1), top .2s cubic-bezier(.3,.8,.4,1), opacity .3s;
     cursor: pointer;
     transform-origin: 50% 100%;
-    transform: scaleY(calc(1 / var(--stretch))) rotateX(calc(-1 * var(--tilt)));
+    /* 末尾の scale は横向き時の駒サイズ調整（js/render.js updateTokenScale が --tok-scale を設定）。
+       縦向きでは変数が無く scale(1)＝無操作。原点が足元なので接地位置は動かない */
+    transform: scaleY(calc(1 / var(--stretch))) rotateX(calc(-1 * var(--tilt))) scale(var(--tok-scale, 1));
   }
   .tok .tsh {
     position: absolute;
@@ -387,7 +389,7 @@
   }
   @keyframes selbounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
   .tok.spawn { animation: spawnin .35s cubic-bezier(.34,1.56,.64,1); }
-  @keyframes spawnin { from { transform: scaleY(calc(1 / var(--stretch))) rotateX(calc(-1 * var(--tilt))) scale(.2); opacity: 0; } }
+  @keyframes spawnin { from { transform: scaleY(calc(1 / var(--stretch))) rotateX(calc(-1 * var(--tilt))) scale(calc(var(--tok-scale, 1) * .2)); opacity: 0; } }
 
   .tok .thp {
     width: 24px; height: 3px;
@@ -423,7 +425,7 @@
     align-items: center;
     pointer-events: none;
     transform-origin: 50% 100%;
-    transform: scaleY(calc(1 / var(--stretch))) rotateX(calc(-1 * var(--tilt)));
+    transform: scaleY(calc(1 / var(--stretch))) rotateX(calc(-1 * var(--tilt))) scale(var(--tok-scale, 1));
   }
   .chest::before {
     content: '';
@@ -445,6 +447,14 @@
     text-shadow: 0 0 3px #b07f1e, 0 1px 1px #000;
     line-height: 1; margin-top: 1px;
   }
+
+  /* ───── side（情報バー＋シナジー＋酒場）をまとめる箱 ─────
+     縦向きでは「gap:6px で縦に積む」だけ＝#app 直下に並んでいた頃とピクセル等価。
+     横向き（html.lay-land）ではこれが右カラムになり、タブで中身を切り替える。
+     ※ display:contents にしてはいけない: #app > * { z-index:1 }（前述）が効かなくなり、
+       #app::before の暗いビネットの下に酒場パネルが沈む */
+  #side { display: flex; flex-direction: column; gap: 6px; flex: 0 0 auto; min-width: 0; }
+  #tabBar { display: none; }   /* 横向きのときだけ出す */
 
   /* ───── info strip ───── */
   #infoBar {
@@ -1186,7 +1196,7 @@
   #panel .shareCopy { flex: 0 0 92px; background: linear-gradient(180deg, #6b7fa3, #50617f); color: #fff; }
   .hu { display: flex; gap: 7px; padding: 5px 0; border-bottom: 1px dashed #b07f1e33; align-items: flex-start; }
   .hu:last-child { border-bottom: none; }
-  .hu-ic { font-size: 19px; line-height: 1.2; margin-top: 1px; flex: 0 0 auto; }
+  .hu-ic { font-size: 34px; line-height: 1; margin-top: 1px; flex: 0 0 auto; width: 46px; text-align: center; }
   .hu-body { flex: 1; min-width: 0; }
   .hu-top { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
   .hu-top b { font-size: 11.5px; }
@@ -1227,16 +1237,17 @@
     pointer-events: none;
     -webkit-user-drag: none;
   }
-  .hu-ic .uimg, .rcu-ic .uimg { width: 22px; height: 22px; }   /* 図鑑・リザルトカード */
+  .hu-ic .uimg { width: 46px; height: 46px; }   /* 図鑑: ユニットを大きく表示 */
+  .rcu-ic .uimg { width: 22px; height: 22px; }   /* リザルトカード */
   .uimg-s { width: 15px; height: 15px; display: inline-block; vertical-align: -3px; }  /* 情報バー等の行内 */
   .uimg-fly { width: 30px; height: 30px; }                     /* 購入時のフライ演出 */
 
   /* ── B方式: 全身立ち絵ユニット（img: を持つと hasimg が付く）──
      円メダルを外し、足を接地させて地形に立たせる。陣営（味方/敵）は
      メダル復活の代わりに「足元の影を薄く色づけ」して識別する。 */
-  .tok.hasimg { margin-top: -31px; }                 /* 立ち絵を上へ伸ばし、足元を従来の接地点に合わせる */
+  .tok.hasimg { margin-top: -41px; }                 /* 立ち絵を上へ伸ばし、足元を従来の接地点に合わせる（サイズUPに追従） */
   .tok.hasimg .tport {
-    width: 34px; height: 40px;
+    width: 46px; height: 50px;                        /* 盤面のユニットを大きく表示（約1.4倍・足元基準） */
     background: none; border: none; box-shadow: none; border-radius: 0;
     align-items: flex-end;                            /* 足を下辺に接地 */
     overflow: visible;
@@ -1248,10 +1259,11 @@
     object-position: bottom center;                   /* 足元基準で拡大縮小 */
     filter: drop-shadow(0 1px 0 #00000066);           /* 地際を軽く締める */
   }
-  .tok.hasimg.boss { margin-top: -38px; }
-  .tok.hasimg.boss .tport { height: 48px; }
+  .tok.hasimg.boss { margin-top: -54px; }
+  .tok.hasimg.boss .tport { width: 58px; height: 64px; }   /* ボス（魔王）は一回り大きく */
   /* 陣営識別: 足元の影を薄く染める（円メダルは復活させない） */
-  .tok.hasimg .tsh { bottom: 0; width: 24px; height: 7px; margin-left: -12px; }  /* 立ち絵の足元にぴたりと影を置く */
+  .tok.hasimg .tsh { bottom: 0; width: 30px; height: 8px; margin-left: -15px; }  /* 立ち絵の足元にぴたりと影を置く */
+  .tok.hasimg.boss .tsh { width: 40px; margin-left: -20px; }
   .tok.hasimg.foe .tsh { background: radial-gradient(ellipse at center, #d0503366, transparent 70%); }
   #board.arena .tok.hasimg:not(.foe) .tsh { background: radial-gradient(ellipse at center, #4a90d266, transparent 70%); }
   #board.arena .tok.hasimg.foe .tsh { background: radial-gradient(ellipse at center, #d0503366, transparent 70%); }
@@ -1306,6 +1318,113 @@
   }
   #toast.long b { color: var(--gold); font-size: 13.5px; }
   #toast.long .tsub { color: #7be3a0; font-weight: 900; }
+
+  /* ═════════════════════════════════════════════════════════════════
+     横向きレイアウト（html.lay-land のときだけ有効）
+     盤面を左、酒場まわりを右カラムへ。右カラムはタブで中身を切り替えて場所を稼ぐ。
+     クラスの付け外しは js/render.js の applyLayoutMode()（⚙️設定＝自動/縦/横）。
+     ここに書いたセレクタは全て html.lay-land 配下＝縦向きには一切影響しない。
+     ※ 盤面は7列×9行の「縦長」なので、横持ちの画面（高さが足りない）では
+       盤も駒も縦持ちより小さくなる。広くなるのはタブレット/PCの横。
+     ═════════════════════════════════════════════════════════════════ */
+  html.lay-land { --side-w: clamp(300px, 38vw, 400px); }
+  html.lay-land #app {
+    max-width: none;
+    display: grid;
+    /* minmax(0,…) は必須: 素の 1fr は min-content 以下に縮まず #board{flex:1} が潰せない */
+    grid-template-columns: minmax(0, 1fr) var(--side-w);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "top   top"
+      "board side";
+    column-gap: 8px;
+    row-gap: 6px;
+  }
+  html.lay-land #topbar    { grid-area: top; }
+  html.lay-land #boardWrap { grid-area: board; }
+  html.lay-land #side      { grid-area: side; min-height: 0; }
+
+  /* ── 右カラムのタブ ── */
+  html.lay-land #tabBar { display: flex; gap: 4px; flex: 0 0 auto; }
+  html.lay-land .tab {
+    flex: 1;
+    font-family: inherit; font-weight: 900; font-size: 11px;
+    padding: 5px 0; border-radius: 8px; cursor: pointer;
+    background: #00000044; border: 1px solid #ffffff18; color: #ffffff77;
+  }
+  html.lay-land .tab.on {
+    background: linear-gradient(180deg, #5a3f1e, #3c2a14);
+    border-color: var(--gold-deep); color: var(--parchment);
+  }
+  html.lay-land .tab:active { transform: translateY(1px); }
+  /* 情報バーは常時表示のままパネル最下部へ（タブに入れると駒タップの反応が消えるため） */
+  html.lay-land #infoBar { order: 9; }
+
+  /* 募兵タブ: 酒場が伸び、シナジーは隠れる */
+  html.lay-land #side[data-tab="shop"] #synergy { display: none; }
+  html.lay-land #side[data-tab="shop"] #shopArea { flex: 1 1 auto; min-height: 0; }
+  /* シナジータブ: 酒場はボタンだけの高さに縮む（⚔️戦闘開始は常に押せる） */
+  html.lay-land #side[data-tab="syn"] #shopTitle,
+  html.lay-land #side[data-tab="syn"] #tierOdds,
+  html.lay-land #side[data-tab="syn"] #shopCards,
+  html.lay-land #side[data-tab="syn"] #battleLog { display: none; }
+  html.lay-land #side[data-tab="syn"] #shopArea { flex: 0 0 auto; }
+  html.lay-land #side[data-tab="syn"] #synergy {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto;
+    align-content: flex-start; overscroll-behavior: contain;
+  }
+
+  /* 縦長パネルを使い切る。padding-top は必須（.cost バッジが top:-7px なので
+     overflow:auto の切り取り box で上端が欠ける） */
+  html.lay-land #shopCards {
+    flex: 1 1 auto; min-height: 0;
+    flex-wrap: wrap; align-content: flex-start;
+    overflow-y: auto; overscroll-behavior: contain;
+    padding: 9px 4px 4px;
+  }
+  html.lay-land #shopCards .card { flex: 1 1 78px; max-width: 110px; }
+  html.lay-land #battleLog { height: auto; flex: 1 1 auto; min-height: 0; }
+
+  /* オーバーレイのパネルは横向きだと画面高さを超える（body は overflow:hidden で
+     スクロールできない＝タイトル/ヘルプ/図鑑/闘技場が操作不能になる）ので必ずスクロール可に */
+  html.lay-land #panel {
+    max-height: calc(100dvh - 20px); overflow-y: auto; overscroll-behavior: contain;
+    width: min(94vw, 760px);          /* 横画面いっぱいに広げる（縦持ちは 340px のまま） */
+  }
+  html.lay-land .help-scroll { max-height: none; }   /* 入れ子スクロールは1つに */
+  /* 長い読み物（ヘルプ・ユニット図鑑）は2段組にして高さを半分にする */
+  html.lay-land .help-scroll { columns: 2; column-gap: 22px; }
+  html.lay-land .help-scroll > * { break-inside: avoid; }
+  html.lay-land .help-scroll h3 { break-after: avoid; }   /* 見出しだけ段の底に取り残さない */
+  /* パネルが広くなっても押しやすい幅に保つ（760px幅のボタンは押しにくい） */
+  html.lay-land #panel .btn { max-width: 420px; margin-left: auto; margin-right: auto; }
+  /* タイトル: 左に説明、右に操作ボタンを並べる（縦持ちでは .start-cols は素のブロック＝従来どおり） */
+  html.lay-land .start-cols {
+    display: grid; grid-template-columns: 1.05fr .95fr;
+    gap: 16px; align-items: start; text-align: left;
+  }
+  html.lay-land .start-cols .help-grid { margin-bottom: 0; }
+  html.lay-land .start-actions { text-align: center; }
+
+  /* チュートリアルの吹き出しが右カラム（🎲や⚔️ボタン）を覆わないように */
+  html.lay-land #tutBox {
+    right: auto; top: 20%;
+    width: min(400px, calc(100% - var(--side-w) - 32px));
+  }
+
+  /* 画面中央固定の演出は盤面カラムの中央へ寄せる */
+  html.lay-land #biomeBanner { left: calc((100% - var(--side-w)) / 2); }
+  html.lay-land #toast { left: calc((100% - var(--side-w)) / 2); bottom: 8%; }
+
+  /* ── 高さが極端に低い横持ち（スマホ）: 盤の上の帯を盤に重ねて高さを稼ぐ ──
+     #boardLabel / #warGauge はどちらも pointer-events:none・z-index:3 なので重ねられる */
+  @media (max-height: 480px) {
+    html.lay-land #app { padding-top: 4px; padding-bottom: calc(4px + env(safe-area-inset-bottom)); }
+    html.lay-land #boardLabel { position: absolute; top: 15px; left: 0; right: 0; }
+    html.lay-land #warGauge   { position: absolute; top: 0; left: 0; right: 0; margin: 0; }
+    html.lay-land #board      { margin-top: 12px; }
+    html.lay-land #slamText   { font-size: 42px; }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }

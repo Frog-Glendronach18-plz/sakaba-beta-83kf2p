@@ -14,6 +14,19 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="酒場戦記">
 <link rel="stylesheet" href="./css/style.css">
+<script>
+/* 横向きレイアウトを最初の1フレームから適用する（本体JSはページ末尾で読み込まれるため、
+   ここで先に html.lay-land を付けないと縦→横のちらつきが出る）。
+   判定ロジックは js/render.js の applyLayoutMode() と一致させること。
+   ※このブロックに body の閉じタグや script の閉じタグを文字列として書かないこと:
+     build.js が最初の body 閉じタグを game.min.js の挿入位置に使うため、ここに書くと
+     ビルド後の index.html が壊れる（本体JSが読み込まれなくなる） */
+try {
+  var m = localStorage.getItem('sakabaLayoutMode_v1') || 'auto';
+  if (m === 'landscape' || (m === 'auto' && matchMedia('(orientation: landscape) and (min-width: 600px)').matches))
+    document.documentElement.classList.add('lay-land');
+} catch (e) {}
+</script>
 </head>
 <body>
 <div id="app">
@@ -44,20 +57,27 @@
     </div>
   </div>
 
-  <div id="infoBar"></div>
-  <div id="synergy"></div>
+  <!-- 横向きレイアウトでは #side が右カラムになる（縦向きでは従来どおり縦に積むだけ） -->
+  <div id="side">
+    <div id="tabBar">
+      <button class="tab on" data-tab="shop">🍺募兵</button>
+      <button class="tab" data-tab="syn">✨シナジー</button>
+    </div>
+    <div id="infoBar"></div>
+    <div id="synergy"></div>
 
-  <div id="shopArea">
-    <div id="shopTitle"><span id="shopName">🍺 酒場の募兵</span><span id="incomeNote"></span></div>
-    <div id="tierOdds"></div>
-    <div id="shopCards"></div>
-    <div id="battleLog"></div>
-    <div id="shopBtns">
-      <button class="btn" id="rerollBtn">🎲 1G</button>
-      <button class="btn" id="lockModeBtn" title="取り置き">🔒</button>
-      <button class="btn" id="capBtn">👥 +1枠</button>
-      <button class="btn" id="sellBtn">💰 売却</button>
-      <button class="btn" id="fightBtn">⚔️ 戦闘開始</button>
+    <div id="shopArea">
+      <div id="shopTitle"><span id="shopName">🍺 酒場の募兵</span><span id="incomeNote"></span></div>
+      <div id="tierOdds"></div>
+      <div id="shopCards"></div>
+      <div id="battleLog"></div>
+      <div id="shopBtns">
+        <button class="btn" id="rerollBtn">🎲 1G</button>
+        <button class="btn" id="lockModeBtn" title="取り置き">🔒</button>
+        <button class="btn" id="capBtn">👥 +1枠</button>
+        <button class="btn" id="sellBtn">💰 売却</button>
+        <button class="btn" id="fightBtn">⚔️ 戦闘開始</button>
+      </div>
     </div>
   </div>
   <div id="tutBox"></div>
