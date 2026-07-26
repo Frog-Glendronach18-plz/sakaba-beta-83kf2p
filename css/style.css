@@ -675,6 +675,23 @@
     font-size: 20px;
     border: 2.5px solid;
     background: radial-gradient(circle at 35% 30%, #fff, #d9c8a3);
+    overflow: hidden;          /* 胸像トリミング用。はみ出した下半身を丸枠で切る */
+  }
+  /* 立ち絵カードは「胸像」で見せる。
+     丸枠（内側30px）に全身96pxを収めると顔が数pxしか無く誰か分からないため、
+     上から約7割（頭〜胸）を拡大して映し、下半身は枠外へ逃がす。
+     倍率 1.4 = 表示される縦の割合 1/1.4 ≒ 71%。
+     ※ この絵は頭身が低く「頭だけで縦の半分近く」を占めるため、寄せすぎると
+       顎と肩が切れて顔アップになってしまう（1.8 で実際にそうなった）。
+       1.4 なら全員の顎が入り、兜・フード・盾など衣装の識別要素も残る。
+     ※ origin を上端にしているのは頭頂を切らないため（絵の中身は y=1〜5 から始まる）。
+     ※ 珍客・来訪者のカードは丸いバッジ絵なので bust を付けない（拡大すると縁が切れる） */
+  .card .cport.bust .uimg {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    object-position: top center;
+    transform: scale(1.4);
+    transform-origin: 50% 0%;
   }
   .card .cname { font-size: 9.5px; font-weight: 900; line-height: 1.1; white-space: nowrap; }
   .card .cstats { font-size: 11px; font-weight: 900; display: flex; gap: 5px; }
@@ -1300,6 +1317,61 @@
   #board.arena .tok.hasimg:not(.foe) .tsh { background: radial-gradient(ellipse at center, #4a90d266, transparent 70%); }
   #board.arena .tok.hasimg.foe .tsh { background: radial-gradient(ellipse at center, #d0503366, transparent 70%); }
   .tok.hasimg.selected .uimg { filter: drop-shadow(0 0 3px #ffe08a) drop-shadow(0 1px 0 #00000066); }
+
+  /* ── ★・エースの光り物を「絵の形」に沿わせる ──
+     円メダル時代の演出は box-shadow で光らせていたが、立ち絵の .tport は
+     絵より一回り大きい"透明な矩形"なので、そのままだと絵ではなく
+     矩形の外周が四角く光ってしまう（★3で特に目立つ）。
+     ※ .tok.hasimg .tport の box-shadow:none だけでは消えない。
+       s3pulse/s4pulse/acepulse が keyframe で box-shadow を打ち込んでおり、
+       アニメーション由来の値は通常の宣言より強いため。アニメごと差し替える必要がある。
+     → pulse を外し、シルエットを縁取る drop-shadow に置き換える */
+  .tok.hasimg.s2 .tport,
+  .tok.hasimg.s3 .tport,
+  .tok.hasimg.s4 .tport,
+  .tok.hasimg.ace .tport { animation: idlebob 2.6s ease-in-out infinite; box-shadow: none; }
+  .tok.hasimg.s3 .uimg  { animation: s3glow 1.6s ease-in-out infinite; }
+  .tok.hasimg.s4 .uimg  { animation: s4glow 2.4s linear infinite; }
+  .tok.hasimg.ace .uimg { animation: aceglow 1.3s ease-in-out infinite; }
+  @keyframes s3glow {
+    0%, 100% { filter: drop-shadow(0 0 2px var(--gold)) drop-shadow(0 1px 0 #00000066); }
+    50%      { filter: drop-shadow(0 0 5px var(--gold)) drop-shadow(0 0 2px #fff3c4) drop-shadow(0 1px 0 #00000066); }
+  }
+  @keyframes s4glow {
+    0%, 100% { filter: drop-shadow(0 0 4px var(--gold)) drop-shadow(0 1px 0 #00000066); }
+    33%      { filter: drop-shadow(0 0 4px #ff7eb5) drop-shadow(0 1px 0 #00000066); }
+    66%      { filter: drop-shadow(0 0 4px #7ecbff) drop-shadow(0 1px 0 #00000066); }
+  }
+  @keyframes aceglow {
+    0%, 100% { filter: drop-shadow(0 0 2px #c04ad6) drop-shadow(0 1px 0 #00000066); }
+    50%      { filter: drop-shadow(0 0 5px #c04ad6) drop-shadow(0 1px 0 #00000066); }
+  }
+  /* ★3/★4 の回転リングは頭の高さ（円メダルの位置）に合わせてあり、立ち絵だと
+     宙に浮いた輪に見える。足元に敷く魔法陣（平たい楕円）へ置き換える。
+     楕円は回すと歪んで見えるので、回転ではなく明滅にする */
+  .tok.hasimg.s3::before,
+  .tok.hasimg.s4::before {
+    top: auto; bottom: -2px;
+    width: 34px; height: 13px; margin-left: -17px;
+    animation: ringpulse 1.8s ease-in-out infinite;
+  }
+  .tok.hasimg.s4::after {
+    top: auto; bottom: -5px;
+    width: 44px; height: 17px; margin-left: -22px;
+    animation: ringpulse 2.6s ease-in-out infinite;
+  }
+  .tok.hasimg.boss.s3::before, .tok.hasimg.boss.s4::before { width: 44px; margin-left: -22px; }
+  @keyframes ringpulse { 0%, 100% { opacity: .3; } 50% { opacity: .85; } }
+
+  /* ── 対人戦(闘技場)の敵味方識別 ──
+     両軍とも同じ味方スプライトを使うため、足元の影の色だけでは見分けにくい。
+     相手側は彩度と明度を落として「くすませる」。
+     ※ .uimg ではなく .tport に掛けること。.uimg に掛けると上の ★3 等の
+       drop-shadow アニメーションに上書きされて効かなくなる（アニメの方が強い）。
+       親要素の filter は子の filter と合成されるので、この掛け方なら共存できる */
+  #board.arena .tok.hasimg.foe .tport { filter: grayscale(.75) brightness(.7) contrast(1.05); }
+  #board.arena .tok.hasimg.foe .tsh { background: radial-gradient(ellipse at center, #00000088, transparent 70%); }
+  #board.arena .tok.hasimg:not(.foe) .tport { filter: saturate(1.12); }   /* 自軍はほんの少し鮮やかに */
 
   /* ── 情報バーの系統チップ（タップした駒のシナジー） ── */
   #infoBar .ib-traits { display: inline-flex; gap: 2px; margin: 0 3px; vertical-align: 1px; }
