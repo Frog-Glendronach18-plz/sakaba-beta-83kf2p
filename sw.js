@@ -3,7 +3,7 @@
    ファイルを更新して公開するときは CACHE_VERSION を上げること（古いキャッシュは自動削除される） */
 'use strict';
 
-const CACHE_VERSION = 'sakaba-v1.26.0';  // アプリ本体（コード変更で上げる）
+const CACHE_VERSION = 'sakaba-v1.27.0';  // アプリ本体（コード変更で上げる）
 const MEDIA_CACHE = 'sakaba-media-v2';   // BGM（音源を差し替えたときだけ上げる）
 const FONT_CACHE = 'sakaba-fonts-v1';
 
@@ -34,7 +34,16 @@ const UNIT_ART = [
   // 敵（雑魚5・エース3・ボス魔王）の仮ドット絵
   './img/units/e_gobl.png', './img/units/e_wolf.png', './img/units/e_arch.png', './img/units/e_scor.png',
   './img/units/e_spid.png', './img/units/e_dragon.png', './img/units/e_ogre.png', './img/units/e_darkmage.png',
-  './img/units/e_maou.png',
+  './img/units/e_maou.png', './img/units/e_bat.png',
+  // 隠しキャラ（盤面に立つ）: 勇者・味方魔王・精霊・守護精霊・シーフ(旧)・闘技場の幽霊
+  './img/units/hero.png', './img/units/allymaou.png', './img/units/spirit.png',
+  './img/units/gspirit.png', './img/units/thief.png', './img/units/ghost.png',
+  // 募兵カードにだけ出る面々: 珍客4種・疲れた実力者4系統
+  './img/units/g_dog.png', './img/units/g_cat.png', './img/units/g_nurse.png', './img/units/g_akane.png',
+  './img/units/vis_war.png', './img/units/vis_tank.png', './img/units/vis_mage.png', './img/units/vis_merc.png',
+  // ゲーム内アイコン（攻撃力・体力など）。CSS の .gi-* が参照する
+  './img/ui/atk.png', './img/ui/hp.png', './img/ui/gold.png', './img/ui/cap.png',
+  './img/ui/forge.png', './img/ui/star.png', './img/ui/pet.png', './img/ui/threat.png',
 ];
 
 const APP_SHELL = [

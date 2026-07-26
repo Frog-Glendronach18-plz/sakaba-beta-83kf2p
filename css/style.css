@@ -1242,6 +1242,38 @@
   .uimg-s { width: 15px; height: 15px; display: inline-block; vertical-align: -3px; }  /* 情報バー等の行内 */
   .uimg-fly { width: 30px; height: 30px; }                     /* 購入時のフライ演出 */
 
+  /* ── ゲーム内アイコン（攻撃力・体力など）──
+     マークアップは <i class="gi gi-atk">⚔</i>。中の絵文字は「classic表示に戻したとき」と
+     「画像が落ちたとき」のフォールバックで、画像モードでは透明にして隠している。
+     ※ ユニットの見た目（⚙️設定の 🎨/🔤）に追従する。絵文字を選ぶと html.icon-classic が付き、
+       背景画像を外して絵文字がそのまま出る＝1要素で両モードを賄える
+     ※ サイズは 1em 追従。文字と同じ行に置いても行送りが変わらないよう vertical-align で微調整 */
+  .gi {
+    display: inline-block;
+    width: 1.05em; height: 1.05em;
+    vertical-align: -.16em;
+    background: no-repeat center / contain;
+    image-rendering: pixelated;
+    color: transparent;              /* 画像モードでは中の絵文字を隠す */
+    font-size: inherit; line-height: 1;
+    flex: none;
+  }
+  .gi-atk    { background-image: url('../img/ui/atk.png'); }
+  .gi-hp     { background-image: url('../img/ui/hp.png'); }
+  .gi-gold   { background-image: url('../img/ui/gold.png'); }
+  .gi-cap    { background-image: url('../img/ui/cap.png'); }
+  .gi-forge  { background-image: url('../img/ui/forge.png'); }
+  .gi-star   { background-image: url('../img/ui/star.png'); }
+  .gi-pet    { background-image: url('../img/ui/pet.png'); }
+  .gi-threat { background-image: url('../img/ui/threat.png'); }
+  /* 絵文字モード: 画像を外して元の絵文字へ戻す */
+  html.icon-classic .gi {
+    background-image: none !important;
+    color: inherit;
+    width: auto; height: auto;
+    vertical-align: baseline;
+  }
+
   /* ── B方式: 全身立ち絵ユニット（img: を持つと hasimg が付く）──
      円メダルを外し、足を接地させて地形に立たせる。陣営（味方/敵）は
      メダル復活の代わりに「足元の影を薄く色づけ」して識別する。 */
