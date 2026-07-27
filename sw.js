@@ -3,7 +3,7 @@
    ファイルを更新して公開するときは CACHE_VERSION を上げること（古いキャッシュは自動削除される） */
 'use strict';
 
-const CACHE_VERSION = 'sakaba-v1.34.0';  // アプリ本体（コード変更で上げる）
+const CACHE_VERSION = 'sakaba-v1.36.0';  // アプリ本体（コード変更で上げる）
 const MEDIA_CACHE = 'sakaba-media-v2';   // BGM（音源を差し替えたときだけ上げる）
 const FONT_CACHE = 'sakaba-fonts-v1';
 
@@ -24,7 +24,7 @@ const MEDIA = [
    ベストエフォート＝ファイルが無くてもインストールは失敗しない。
    ※列挙し忘れてもオンライン時は通常キャッシュで表示される（オフライン初回のみ欠ける） */
 const UNIT_ART = [
-  './img/map_sample2.webp',   // 盤面背景アトラス（4×4・WebP）。ベストエフォート（失敗してもオンライン時に取得）
+  './img/map_sample2.webp',   // 盤面背景アトラス（4×4・1088×1448・WebP）。ベストエフォート（失敗してもオンライン時に取得）
   // ドット絵ユニット（全身立ち絵）。定義に img: を足すたびここにも列挙する（現在は味方18体・仮絵）
   './img/units/sword.png', './img/units/guard.png', './img/units/appr.png', './img/units/pedl.png',
   './img/units/prayr.png', './img/units/relic.png', './img/units/knight.png', './img/units/blade.png',
@@ -39,7 +39,9 @@ const UNIT_ART = [
   './img/units/hero.png', './img/units/allymaou.png', './img/units/spirit.png',
   './img/units/gspirit.png', './img/units/thief.png', './img/units/ghost.png',
   // 募兵カードにだけ出る面々: 珍客4種・疲れた実力者4系統
-  './img/units/g_dog.png', './img/units/g_cat.png', './img/units/g_nurse.png', './img/units/g_akane.png',
+  // ワンコは絵柄3種（中身は同じ。わんこ喫茶では全種類が並ぶので3枚とも要る）
+  './img/units/g_dog.png', './img/units/g_dog2.png', './img/units/g_dog3.png',
+  './img/units/g_cat.png', './img/units/g_nurse.png', './img/units/g_akane.png',
   './img/units/vis_war.png', './img/units/vis_tank.png', './img/units/vis_mage.png', './img/units/vis_merc.png',
   // ゲーム内アイコン（攻撃力・体力など）。CSS の .gi-* が参照する
   './img/ui/atk.png', './img/ui/hp.png', './img/ui/gold.png', './img/ui/cap.png',
