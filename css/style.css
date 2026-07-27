@@ -282,8 +282,13 @@
      （足元の影は .tok が直立ビルボードのため地面に寝ず見えにくいので識別には使わない） */
   #board.arena .tok:not(.foe) .tport { background: radial-gradient(circle at 35% 30%, #cbe6ff, #5f9fdb); }
   #board.arena .tok.foe .tport { background: radial-gradient(circle at 35% 30%, #ffd5c8, #dd7154); }
-  /* 捕獲魔物: 緑リング+緑肌+🐾バッジで通常味方と識別 */
-  .tok.pet .tport {
+  /* 捕獲魔物（円メダル＝クラシック表示のとき）: 緑リング+緑肌+🐾バッジで通常味方と識別。
+     ※ :not(.foe) が要る。闘技場の幽霊は敵側にも pet が付く（arena.js の side:'E', pet:true）ため、
+       付けないと「相手の幽霊が味方色の緑リングを纏う」＝識別が逆に壊れる
+     ※ :not(.hasimg) も必須。詳細度が上がった分だけ「円メダルを消す」.tok.hasimg .tport に
+       競り勝ってしまい、立ち絵の背後に緑の四角が復活する（実際にそうなった）。
+       立ち絵側の識別は下の .tok.hasimg.pet ブロックが受け持つ */
+  .tok.pet:not(.foe):not(.hasimg) .tport {
     border-color: var(--pet);
     box-shadow: 0 0 8px #4ad67e88, 0 1px 3px #000;
     background: radial-gradient(circle at 35% 30%, #d9f0e0, #7fbb93);
@@ -543,7 +548,11 @@
   .todds.t3 { background: var(--t3); }
   /* 0%（宴で出ないTier）は暗く沈めて「来ない」ことをひと目で示す */
   .todds.zero { background: #ffffff14; color: #ffffff55; }
-  #shopCards { display: flex; gap: 6px; justify-content: center; }
+  /* min-height は「戦闘に入ると盤面が跳ねる」対策。肖像枠が幅追従(aspect-ratio)なので、
+     看板娘の店(5枠)ではカードが細く＝低くなり、実況ログ(#battleLog)と高さがずれる。
+     下限を揃えておけば 4枠でも5枠でも #shopArea の高さが変わらない。
+     ※ 横持ちでは html.lay-land #shopCards が min-height:0 で打ち消す（縦に伸ばして使うため） */
+  #shopCards { display: flex; gap: 6px; justify-content: center; min-height: 128px; }
 
   /* ───── 戦況実況ログ（戦闘中は募兵枠を再利用）───── */
   #battleLog {
@@ -551,7 +560,8 @@
     flex-direction: column;
     justify-content: flex-end;    /* 下端に最新、古いものは上へ押し上げられて流れる */
     align-items: stretch;
-    height: 90px;                 /* 募兵カードとほぼ同じ高さ＝戦闘切替で盤面がずれない */
+    height: 128px;                /* 募兵カードと同じ高さ＝戦闘切替で盤面がずれない。
+                                     .card の高さを変えたらこの値も合わせること（ずれると開戦の瞬間に盤面が跳ねる） */
     overflow: hidden;
     padding: 0 2px;
     gap: 2px;
@@ -674,30 +684,33 @@
     background: #000000b0; border-radius: 9px;
   }
   .card.cantafford { filter: grayscale(.75); opacity: .55; }
+  /* 募兵カードの肖像枠。丸メダル(34px)だとカード幅 76px の半分も使えず、
+     全身96pxの立ち絵を入れても顔が数pxで誰か分からなかった。
+     → 角を取った四角にしてカード幅いっぱいまで広げる。横幅が主役なので
+     絵の描画サイズは「枠の幅」で決まり、同じ縦位置のまま約1.7倍になる。 */
   .card .cport {
-    width: 34px; height: 34px;
-    border-radius: 50%;
+    width: 100%; aspect-ratio: 1.46;
+    border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
+    font-size: 27px;                                       /* 絵文字(クラシック表示)も枠に合わせて拡大 */
     border: 2.5px solid;
-    background: radial-gradient(circle at 35% 30%, #fff, #d9c8a3);
-    overflow: hidden;          /* 胸像トリミング用。はみ出した下半身を丸枠で切る */
+    background: radial-gradient(ellipse at 50% 25%, #fff, #d9c8a3);
+    overflow: hidden;          /* 胸像トリミング用。はみ出した下半身を枠で切る */
   }
   /* 立ち絵カードは「胸像」で見せる。
-     丸枠（内側30px）に全身96pxを収めると顔が数pxしか無く誰か分からないため、
-     上から約7割（頭〜胸）を拡大して映し、下半身は枠外へ逃がす。
-     倍率 1.4 = 表示される縦の割合 1/1.4 ≒ 71%。
-     ※ この絵は頭身が低く「頭だけで縦の半分近く」を占めるため、寄せすぎると
-       顎と肩が切れて顔アップになってしまう（1.8 で実際にそうなった）。
-       1.4 なら全員の顎が入り、兜・フード・盾など衣装の識別要素も残る。
-     ※ origin を上端にしているのは頭頂を切らないため（絵の中身は y=1〜5 から始まる）。
-     ※ 珍客・来訪者のカードは丸いバッジ絵なので bust を付けない（拡大すると縁が切れる） */
+     cover ＝ 枠の広い辺（＝横幅）に合わせて拡大し、あふれた下半身を枠外へ逃がす。
+     見えるのは上から 66%（頭〜腰）で、兜・フード・盾など識別要素は残る。
+     ※ 高さを固定せず aspect-ratio にしてあるのは、見える割合＝高さ÷幅 だから。
+       固定高だと横向きレイアウトの広いカード（枠102px）で 48% まで下がり、顎が切れた。
+       比で持てば、縦持ち4枚/5枚・横持ち・折り返しの端カード、どの幅でも同じ胸像になる。
+     ※ transform で更に寄せてはいけない。この絵は 96×96 のほぼ全面に描かれており
+       （実測 bbox 幅 72〜96px）、拡大すると腕・武器・盾の左右が切れる。cover が上限。
+     ※ object-position が top なのは頭頂を切らないため（絵の中身は y=0〜9 から始まる）。
+     ※ 来訪者(vis_*)のカードだけは丸いバッジ絵なので bust を付けない（下端が欠ける） */
   .card .cport.bust .uimg {
     width: 100%; height: 100%;
-    object-fit: contain;
+    object-fit: cover;
     object-position: top center;
-    transform: scale(1.4);
-    transform-origin: 50% 0%;
   }
   .card .cname { font-size: 9.5px; font-weight: 900; line-height: 1.1; white-space: nowrap; }
   .card .cstats { font-size: 11px; font-weight: 900; display: flex; gap: 5px; }
@@ -761,7 +774,7 @@
     animation: dogwiggle 1.6s ease-in-out infinite;
   }
   @keyframes dogwiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-2deg); } 75% { transform: rotate(2deg); } }
-  .card.dogcard .cport { background: radial-gradient(circle at 35% 30%, #fff, #ffe3ec); }
+  .card.dogcard .cport { background: radial-gradient(ellipse at 50% 25%, #fff, #ffe3ec); }
   .card.nursecard {
     border-color: #4fc47e;
     background: linear-gradient(180deg, #eefbf2, #d7f0e0);
@@ -769,7 +782,7 @@
     animation: nursepulse 1.8s ease-in-out infinite;
   }
   @keyframes nursepulse { 50% { box-shadow: 0 3px 0 #000000aa, 0 0 16px #4fc47e99; } }
-  .card.nursecard .cport { background: radial-gradient(circle at 35% 30%, #fff, #ddf5e6); }
+  .card.nursecard .cport { background: radial-gradient(ellipse at 50% 25%, #fff, #ddf5e6); }
   .card.akanecard {
     border-color: #c9a0ff;
     background: linear-gradient(180deg, #f8f0fe, #e9d9f6);
@@ -781,7 +794,7 @@
     30% { transform: translateY(-2.5px) rotate(-1.5deg); }
     70% { transform: translateY(-1px) rotate(1.5deg); }
   }
-  .card.akanecard .cport { background: radial-gradient(circle at 35% 30%, #fff, #f0e2fc); }
+  .card.akanecard .cport { background: radial-gradient(ellipse at 50% 25%, #fff, #f0e2fc); }
   /* 疲れた実力者: 影を落とした暗色カード。項垂れるようにゆっくり揺れる */
   .card.viscard {
     border-color: #3b3f4a;
@@ -793,7 +806,7 @@
     0%,100% { transform: translateY(0); filter: brightness(1); }
     55% { transform: translateY(1.6px); filter: brightness(.92); }
   }
-  .card.viscard .cport { background: radial-gradient(circle at 35% 30%, #9aa0ae, #565c68); filter: grayscale(.35); }
+  .card.viscard .cport { background: radial-gradient(ellipse at 50% 25%, #9aa0ae, #565c68); filter: grayscale(.35); }
   .card.viscard .cname { color: #e2e5ec; }
   .card.viscard .btag { color: #9aa0ae; }
   .card.viscard .cost { background: #3b3f4a; color: #cfd4de; }
@@ -813,7 +826,7 @@
     background: linear-gradient(180deg, #fff8e8, #ffe9c4);
     animation: cardflip .4s cubic-bezier(.2,.8,.3,1) backwards, s4pulse 2.4s linear infinite;
   }
-  .card.herocard .cport { background: radial-gradient(circle at 35% 30%, #fff, #ffe9c4); }
+  .card.herocard .cport { background: radial-gradient(ellipse at 50% 25%, #fff, #ffe9c4); }
 
   #shopBtns { display: flex; gap: 6px; }
   .btn {
@@ -1219,7 +1232,7 @@
   #panel .shareCopy { flex: 0 0 92px; background: linear-gradient(180deg, #6b7fa3, #50617f); color: #fff; }
   .hu { display: flex; gap: 7px; padding: 5px 0; border-bottom: 1px dashed #b07f1e33; align-items: flex-start; }
   .hu:last-child { border-bottom: none; }
-  .hu-ic { font-size: 44px; line-height: 1; margin-top: 1px; flex: 0 0 auto; width: 64px; text-align: center; }
+  .hu-ic { font-size: 52px; line-height: 1; margin-top: 1px; flex: 0 0 auto; width: 84px; text-align: center; }
   .hu-body { flex: 1; min-width: 0; }
   .hu-top { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
   .hu-top b { font-size: 11.5px; }
@@ -1260,7 +1273,7 @@
     pointer-events: none;
     -webkit-user-drag: none;
   }
-  .hu-ic .uimg { width: 64px; height: 64px; }   /* 図鑑: ユニットを大きく表示 */
+  .hu-ic .uimg { width: 84px; height: 84px; }   /* 図鑑: 立ち絵をしっかり見せる（本文は残り幅で折り返す） */
   .uimg-mx { width: 30px; height: 30px; display: inline-block; vertical-align: middle; }  /* シナジー×Tier早見表 */
   .rcu-ic .uimg { width: 22px; height: 22px; }   /* リザルトカード */
   .uimg-s { width: 15px; height: 15px; display: inline-block; vertical-align: -3px; }  /* 情報バー等の行内 */
@@ -1379,6 +1392,34 @@
   #board.arena .tok.hasimg.foe .tport { filter: grayscale(.75) brightness(.7) contrast(1.05); }
   #board.arena .tok.hasimg.foe .tsh { background: radial-gradient(ellipse at center, #00000088, transparent 70%); }
   #board.arena .tok.hasimg:not(.foe) .tport { filter: saturate(1.12); }   /* 自軍はほんの少し鮮やかに */
+
+  /* ── 捕らえた魔物の敵味方識別（通常モード）──
+     捕獲した魔物は「倒した敵とまったく同じ絵」のまま味方として立つ。円メダル表示なら
+     緑リング＋緑肌で見分けられるが、立ち絵表示では .tok.hasimg .tport が
+     border / background / box-shadow をまとめて消すので、手掛かりが 🐾 バッジだけになり、
+     同じ魔物が敵にも並んでいると区別がつかない。
+     → 足元に緑の魔法陣を敷き、シルエットを緑で縁取って「捕らえたもの」を示す。
+     ※ filter は .uimg ではなく .tport に掛ける（.uimg 側は ★・エースの
+       drop-shadow アニメーションに上書きされる。親の filter は子と合成される）
+     ※ :not(.foe) は必須。闘技場の幽霊は敵側にも pet が付く
+     ※ 闘技場では id 詳細度の陣営ルール（上）が勝つ＝青/灰の識別がそのまま残る */
+  .tok.hasimg.pet:not(.foe) .tport {
+    filter: drop-shadow(0 0 2px var(--pet)) drop-shadow(0 0 5px #4ad67e77);
+  }
+  .tok.hasimg.pet:not(.foe) .tsh {
+    bottom: -1px; width: 30px; height: 11px; margin-left: -15px;
+    background: radial-gradient(ellipse at center, #4ad67e00 32%, #4ad67ecc 56%, #4ad67e00 80%);
+    animation: petring 1.9s ease-in-out infinite;
+  }
+  @keyframes petring { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+  /* 🐾 は絵や地形の上に重なるため、素の絵文字だと地の色に紛れて何が描いてあるか分からない。
+     明るい緑の丸バッジに乗せる（🐾 の絵文字はどの環境でも濃色なので明色の地なら必ず読める） */
+  .tok.hasimg.pet:not(.foe) .tpet {
+    top: -4px; right: -13px;
+    font-size: 8px; line-height: 13px; width: 13px; height: 13px; text-align: center;
+    background: #8ceeb0; border: 1px solid #14361f; border-radius: 50%;
+    box-shadow: 0 0 5px #4ad67e99;
+  }
 
   /* ── 情報バーの系統チップ（タップした駒のシナジー） ── */
   #infoBar .ib-traits { display: inline-flex; gap: 2px; margin: 0 3px; vertical-align: 1px; }
