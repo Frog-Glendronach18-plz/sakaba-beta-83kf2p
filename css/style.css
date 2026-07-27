@@ -994,6 +994,21 @@
   #predictHeads polygon.pE { fill: #ff6b70dd; }
   #predictHeads polygon.pC { fill: #7fd8ffee; }
   /* 神話魔法使い: 燃える地面 */
+  /* シナジー発動の光輪。駒(.tok)の子として絵の「後ろ」(z-index:-1)に出るので視認性を落とさない。
+     左右にずらした2つの放射グラデーションを重ねることで、2系統持ちの駒を2色に染め分ける
+     （--c1/--c2 と、その「同色ゼロアルファ」--c1o/--c2o は fx.js の synLitFx が入れる。
+       1系統なら同じ色が入るので、少し横長の単色ハローになる）。
+     ※ mask で丸く抜く実装は不可。z-index:-1 と mask を併用すると Chrome で
+       まったく描画されなくなる（.tsh は見えているのに光輪だけ消える形で踏んだ）。
+     ※ transparent へ向けて消さないこと。rgba(0,0,0,0) なので途中でグレーに濁る */
+  .tok .synlit {
+    position: absolute; left: 50%; top: 50%; z-index: -1;
+    border-radius: 50%; pointer-events: none;
+    background:
+      radial-gradient(closest-side at 32% 50%, var(--c1) 0%, var(--c1o) 76%),
+      radial-gradient(closest-side at 68% 50%, var(--c2) 0%, var(--c2o) 76%);
+  }
+
   /* 範囲攻撃の着弾域（3×3）。#board の子なので盤の3D変形に乗り、地面に寝た魔法陣として出る。
      色は fx.js が --aoe に流し込む（術=紫 / 神話魔法=燃焼色）。
      z-index は燃える地面(.burncell)と同じ 1。駒(.tok)は行ごとに 1〜9 を持ち DOM 上も後ろなので、
