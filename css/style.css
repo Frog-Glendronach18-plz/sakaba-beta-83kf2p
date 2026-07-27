@@ -1002,8 +1002,25 @@
     position: absolute; pointer-events: none; z-index: 1;
     border-radius: 10px;
     border: 2px solid var(--aoe);
-    background: radial-gradient(ellipse at 50% 50%, var(--aoe) 0%, transparent 68%);
+    background: radial-gradient(ellipse at 50% 50%, var(--aoe) 0%, var(--aoe0, transparent) 68%);
     box-shadow: 0 0 12px var(--aoe), inset 0 0 16px var(--aoe);
+  }
+  /* 近接の薙ぎ払いの軌跡。conic-gradient で「先端が明るい弧」を作り、
+     mask でドーナツ状に抜いて刃の通り道だけを残す（塗り潰しの扇にしない）。
+     mask 未対応の環境では扇形になるだけで、演出として破綻はしない。
+     駒より前(z-index 4)に出す。地面の面(.aoecell=1)と役割が違い、
+     こちらは「振り抜いた刃」なのでキャラの手前を通ってよい */
+  .sweepfx {
+    position: absolute; pointer-events: none; z-index: 4;
+    border-radius: 50%;
+    /* --aoe0 は「同じ色の透明」（fx.js が hex+00 を入れる）。素の transparent へ補間すると
+       黒を経由してグレーに濁るため、必ず同色ゼロアルファへ向かって消すこと */
+    background: conic-gradient(from 0deg,
+      var(--aoe0, transparent) 0deg, var(--aoe0, transparent) 190deg,
+      var(--aoe) 332deg, #ffffff 353deg, var(--aoe0, transparent) 360deg);
+    -webkit-mask: radial-gradient(closest-side, transparent 46%, #000 56%, #000 94%, transparent 100%);
+            mask: radial-gradient(closest-side, transparent 46%, #000 56%, #000 94%, transparent 100%);
+    filter: drop-shadow(0 0 6px var(--aoe));
   }
   .burncell {
     position: absolute; pointer-events: none; z-index: 1;
