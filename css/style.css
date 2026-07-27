@@ -14,8 +14,12 @@
     --tank: #4d8ec2;
     --mage: #a06ee0;
     --merc: #d8a62e;
-    --pact: #d16bb0;  /* 契シナジーの識別色（術の紫・魔物の緑と区別できる桃紫） */
-    --pet: #4ad67e;   /* 捕獲魔物の識別色 */
+    /* 契シナジーの識別色。祈り手・神官・預言者の法衣と精霊の絵に合わせた深緑（色相140）。
+       同じ緑系の --pet(捕獲魔物) とは明度・彩度で分ける（こちらは暗く落ち着いた緑、
+       あちらは明るいミント）。盤面では契の精霊と捕獲魔物が同時に並ぶので、
+       この差を詰めないこと。白文字とのコントラストは 3.3:1（旧・桃紫の 3.26:1 と同等） */
+    --pact: #37a05a;
+    --pet: #4ad67e;   /* 捕獲魔物の識別色（明るいミント。--pact と混同しない明度差を保つ） */
     --hp-red: #e35648;
     --win: #7cbd6b;
     --t1: #a9744a;
@@ -268,7 +272,9 @@
   .ring-merc .tport { border-color: var(--merc); }
   .ring-pact .tport { border-color: var(--pact); }
   /* 契約の精霊: 蝋燭の灯のような淡い輝き（星・陣営色とは干渉しない控えめな光） */
-  .tok.smn .tport { box-shadow: 0 0 8px #d16bb077, 0 1px 3px #000000aa, inset 0 1px 0 #ffffff66; }
+  /* 契約の精霊（召喚）。契の識別色に合わせた緑の光彩（立ち絵表示では .tok.hasimg .tport が
+     box-shadow を打ち消すので、円メダル＝クラシック表示のときだけ効く） */
+  .tok.smn .tport { box-shadow: 0 0 8px #37a05a88, 0 1px 3px #000000aa, inset 0 1px 0 #ffffff66; }
   .tok.tier3 .tport { box-shadow: 0 0 8px #e8b33d77, 0 1px 3px #000; }
   /* 闘技場: 敵味方は「アイコンの背景色」で識別（自軍=薄い青／相手軍=薄い赤）。
      星レベルは 枠色・グロー・回転リング・★マーク で表現されるので、
@@ -1213,7 +1219,7 @@
   #panel .shareCopy { flex: 0 0 92px; background: linear-gradient(180deg, #6b7fa3, #50617f); color: #fff; }
   .hu { display: flex; gap: 7px; padding: 5px 0; border-bottom: 1px dashed #b07f1e33; align-items: flex-start; }
   .hu:last-child { border-bottom: none; }
-  .hu-ic { font-size: 34px; line-height: 1; margin-top: 1px; flex: 0 0 auto; width: 46px; text-align: center; }
+  .hu-ic { font-size: 44px; line-height: 1; margin-top: 1px; flex: 0 0 auto; width: 64px; text-align: center; }
   .hu-body { flex: 1; min-width: 0; }
   .hu-top { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
   .hu-top b { font-size: 11.5px; }
@@ -1254,7 +1260,8 @@
     pointer-events: none;
     -webkit-user-drag: none;
   }
-  .hu-ic .uimg { width: 46px; height: 46px; }   /* 図鑑: ユニットを大きく表示 */
+  .hu-ic .uimg { width: 64px; height: 64px; }   /* 図鑑: ユニットを大きく表示 */
+  .uimg-mx { width: 30px; height: 30px; display: inline-block; vertical-align: middle; }  /* シナジー×Tier早見表 */
   .rcu-ic .uimg { width: 22px; height: 22px; }   /* リザルトカード */
   .uimg-s { width: 15px; height: 15px; display: inline-block; vertical-align: -3px; }  /* 情報バー等の行内 */
   .uimg-fly { width: 30px; height: 30px; }                     /* 購入時のフライ演出 */
@@ -1379,7 +1386,7 @@
 
   /* ── 図鑑: シナジー×Tier早見表 ── */
   .dexmx { width: 100%; border-collapse: collapse; margin: 2px 0 4px; }
-  .dexmx th, .dexmx td { border: 1px solid #d9c8a355; padding: 3px 2px; text-align: center; font-size: 12px; }
+  .dexmx th, .dexmx td { border: 1px solid #d9c8a355; padding: 3px 2px; text-align: center; font-size: 16px; }
   .dexmx th { font-size: 10px; color: #6b4f23; }
   .dexmx td span { margin: 0 1px; }
   .dexmx-none { color: #c9b890; font-size: 10px; }
