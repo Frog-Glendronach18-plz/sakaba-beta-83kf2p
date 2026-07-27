@@ -994,6 +994,17 @@
   #predictHeads polygon.pE { fill: #ff6b70dd; }
   #predictHeads polygon.pC { fill: #7fd8ffee; }
   /* 神話魔法使い: 燃える地面 */
+  /* 範囲攻撃の着弾域（3×3）。#board の子なので盤の3D変形に乗り、地面に寝た魔法陣として出る。
+     色は fx.js が --aoe に流し込む（術=紫 / 神話魔法=燃焼色）。
+     z-index は燃える地面(.burncell)と同じ 1。駒(.tok)は行ごとに 1〜9 を持ち DOM 上も後ろなので、
+     同値でも駒が上に来る＝面が駒を隠さない */
+  .aoecell {
+    position: absolute; pointer-events: none; z-index: 1;
+    border-radius: 10px;
+    border: 2px solid var(--aoe);
+    background: radial-gradient(ellipse at 50% 50%, var(--aoe) 0%, transparent 68%);
+    box-shadow: 0 0 12px var(--aoe), inset 0 0 16px var(--aoe);
+  }
   .burncell {
     position: absolute; pointer-events: none; z-index: 1;
     background: radial-gradient(circle at 50% 55%, #b06cff55 0%, #8a4fe044 45%, #6a3ab810 78%, transparent 100%);
@@ -1024,6 +1035,12 @@
     box-shadow: 0 14px 50px #000;
     border: 3px solid var(--gold-deep);
     animation: panelin .35s cubic-bezier(.34,1.56,.64,1);
+    /* 安全網: 中身が画面を超えてもパネル内でスクロールできるようにする。
+       #overlay は overflow:visible の中央寄せなので、これが無いと画面外へ出たボタンに
+       一切届かない＝進行不能になる（横持ちは html.lay-land #panel が同じ役目）。
+       通常の高さでは max-height に当たらず、従来と何も変わらない */
+    max-height: calc(100dvh - 20px);
+    overflow-y: auto; overscroll-behavior: contain;
   }
   @keyframes panelin { from { transform: scale(.7) translateY(20px); opacity: 0; } }
   /* ── 旅立ちイベント選択 ── */
@@ -1169,14 +1186,21 @@
     padding: 8px 10px 9px; margin-bottom: 11px;
   }
   #panel .runcard-title { font-size: 10px; font-weight: 800; color: #8a6b3a; margin-bottom: 6px; }
-  #panel .runcard-units { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-bottom: 7px; }
+  /* 駒を大きくした分、背水の陣（固定7＋部隊10＝17体）だと5段に伸びてパネルを押し出す。
+     ここだけスクロールさせて、共有ボタンと「タイトルへ」は必ず画面内に残す */
+  #panel .runcard-units {
+    display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-bottom: 7px;
+    max-height: 34dvh; overflow-y: auto; overscroll-behavior: contain;
+  }
+  /* 走り終えた編成を「見せる」場所なので大きめに取る（旧36px幅では誰がいたのか読めなかった）。
+     1行6体・部隊上限10体＋固定部隊でも2〜3行で収まる */
   #panel .rcu {
     display: flex; flex-direction: column; align-items: center;
-    width: 36px; padding: 3px 0 2px;
+    width: 52px; padding: 3px 0 2px;
     background: #ffffff2e; border: 1px solid #b07f1e33; border-radius: 8px;
   }
-  #panel .rcu-ic { font-size: 18px; line-height: 1.2; filter: drop-shadow(0 1px 1px #00000033); }
-  #panel .rcu-star { font-size: 8.5px; font-weight: 900; color: #8a6b3a; line-height: 1.2; }
+  #panel .rcu-ic { font-size: 30px; line-height: 1.1; filter: drop-shadow(0 1px 1px #00000033); }
+  #panel .rcu-star { font-size: 9px; font-weight: 900; color: #8a6b3a; line-height: 1.2; }
   #panel .rcu-star.s2 { color: #7d8ba3; }
   #panel .rcu-star.s3 { color: #c8901f; }
   #panel .rcu-star.s4 { color: #b04ad6; }
@@ -1275,7 +1299,7 @@
   }
   .hu-ic .uimg { width: 84px; height: 84px; }   /* 図鑑: 立ち絵をしっかり見せる（本文は残り幅で折り返す） */
   .uimg-mx { width: 30px; height: 30px; display: inline-block; vertical-align: middle; }  /* シナジー×Tier早見表 */
-  .rcu-ic .uimg { width: 22px; height: 22px; }   /* リザルトカード */
+  .rcu-ic .uimg { width: 46px; height: 46px; }   /* リザルトカード: 最終編成を見せ場にする */
   .uimg-s { width: 15px; height: 15px; display: inline-block; vertical-align: -3px; }  /* 情報バー等の行内 */
   .uimg-fly { width: 30px; height: 30px; }                     /* 購入時のフライ演出 */
 
