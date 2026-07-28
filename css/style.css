@@ -846,7 +846,7 @@
   }
   /* 取り置きで据え置かれた駒は、新しい並びのフリップ演出をしない（実際は変わっていない） */
   #shopCards.deal .card.nodeal { animation: none; }
-  #shopCards.deal .card.herocard.nodeal { animation: s4pulse 2.4s linear infinite; }
+  #shopCards.deal .card.herocard.nodeal { animation: s4pulseCard 2.4s linear infinite; }
   /* 🔒モードボタン: コンパクト幅。武装中は金色に灯る */
   #lockModeBtn { flex: 0 0 auto; min-width: 42px; padding-left: 8px; padding-right: 8px; }
   #lockModeBtn.armed {
@@ -908,10 +908,24 @@
   #panel .visBtn.shoo { background: linear-gradient(180deg, #a98b5a, #8a6b3a); color: #fff; border-color: #6b5a3e; }
   #panel .visBtn:disabled { opacity: .45; }
   #panel .visBtn .vsub { font-size: 10.5px; font-weight: 700; opacity: .8; }
+  /* 勇者カード。枠絵付き(.framed)の白フチ対策が2つ要る（他のカードと同じ罠を2回踏む場所）:
+     ① background の一括指定は background-clip を border-box に戻す。地色(#fff8e8=ほぼ白)が
+        枠絵の透明な外周1〜4pxからはみ出し、枠の周りが白く光って見える → longhand + content-box
+     ② 円メダル用の s4pulse は inset 0 0 6px #fff を打つ。inset 影は背景の上・borderの下に
+        描かれるので、これも枠絵の透明部分から白く漏れる。さらに box-shadow ごと差し替わるため
+        .card の 0 3px 0（カードの厚み）まで消えて、勇者だけ板が薄く見えていた
+        → カード用に inset 無し・厚み入りの s4pulseCard を用意する */
   .card.herocard {
     border-color: #fff;
-    background: linear-gradient(180deg, #fff8e8, #ffe9c4);
-    animation: cardflip .4s cubic-bezier(.2,.8,.3,1) backwards, s4pulse 2.4s linear infinite;
+    background-image: linear-gradient(180deg, #fff8e8, #ffe9c4);
+    background-clip: content-box;
+    animation: cardflip .4s cubic-bezier(.2,.8,.3,1) backwards, s4pulseCard 2.4s linear infinite;
+  }
+  @keyframes s4pulseCard {
+    0%   { box-shadow: 0 3px 0 #00000088, 0 0 13px var(--gold); }
+    33%  { box-shadow: 0 3px 0 #00000088, 0 0 13px #ff7eb5; }
+    66%  { box-shadow: 0 3px 0 #00000088, 0 0 13px #7ecbff; }
+    100% { box-shadow: 0 3px 0 #00000088, 0 0 13px var(--gold); }
   }
   .card.herocard .cport { background: radial-gradient(ellipse at 50% 25%, #fff, #ffe9c4); }
 
