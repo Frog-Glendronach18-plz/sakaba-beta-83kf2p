@@ -3,7 +3,7 @@
    ファイルを更新して公開するときは CACHE_VERSION を上げること（古いキャッシュは自動削除される） */
 'use strict';
 
-const CACHE_VERSION = 'sakaba-v1.36.0';  // アプリ本体（コード変更で上げる）
+const CACHE_VERSION = 'sakaba-v1.38.1';  // アプリ本体（コード変更で上げる）
 const MEDIA_CACHE = 'sakaba-media-v2';   // BGM（音源を差し替えたときだけ上げる）
 const FONT_CACHE = 'sakaba-fonts-v1';
 
@@ -46,6 +46,12 @@ const UNIT_ART = [
   // ゲーム内アイコン（攻撃力・体力など）。CSS の .gi-* が参照する
   './img/ui/atk.png', './img/ui/hp.png', './img/ui/gold.png', './img/ui/cap.png',
   './img/ui/forge.png', './img/ui/star.png', './img/ui/pet.png', './img/ui/threat.png',
+  // 募兵カードの枠絵（ティア別＋お助け・実力者）。render.js の CARD_FRAMES と対で増やす
+  './img/units/frame/frame_T1_1.png', './img/units/frame/frame_T1_2.png',
+  './img/units/frame/frame_T2_1.png', './img/units/frame/frame_T2_2.png',
+  './img/units/frame/frame_T3_1.png', './img/units/frame/frame_T3_2.png', './img/units/frame/frame_T3_3.png',
+  './img/units/frame/frame_T4.png',
+  './img/units/frame/frame_helper.png', './img/units/frame/frame_unknown.png',
 ];
 
 const APP_SHELL = [

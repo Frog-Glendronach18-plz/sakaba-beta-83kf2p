@@ -648,7 +648,7 @@
   .card.tut-off { filter: grayscale(1) brightness(.5); opacity: .5; pointer-events: none; box-shadow: 0 3px 0 #00000055; transition: filter .2s, opacity .2s; }
 
   .card {
-    flex: 1; max-width: 96px;
+    flex: 1; max-width: 96px; min-width: 0;
     border-radius: 11px;
     background: linear-gradient(180deg, var(--parchment), var(--parchment-dim));
     color: var(--ink);
@@ -674,6 +674,68 @@
   @keyframes cardflip { from { transform: rotateY(80deg) translateY(8px); opacity: 0; } }
   .card.tier2 { border-color: var(--t2); }
   .card.tier3 { border-color: var(--t3); box-shadow: 0 3px 0 #000000aa, 0 0 10px #e8b33d44; }
+
+  /* ───── 募兵カードの枠絵（img/units/frame/*.png・96×120）─────
+     カードの地ごと差し替える1枚絵。どの絵を使うかは render.js の cardFrame() が決め、
+     CSS変数 --frame で受け取る。
+
+     ■ なぜ background ではなく border-image（9スライス）か
+       カードの縦横比は枠数と画面幅で変わる（4枚=0.69 / 5枚=0.58）のに、絵は 0.8。
+       background-size:100% 100% で敷くと**角のリベットが最大3割潰れて楕円になる**。
+       9スライスなら四隅は原寸のまま置かれ、伸びるのは辺の帯だけ（帯は無地なので分からない）。
+     ■ border-width は 0 のまま border-image-width に px を入れている。
+       こうすると枠絵は padding 側へ描かれるので、レイアウト（＝中身の幅）を
+       枠の太さに縛られずに決められる。中身が枠に乗らないよう padding で逃がすこと。
+     ■ 下の background は「絵が落ちたときの地」。border-image の fill が乗ると隠れる */
+  /* 帯の太さ(--fw)はカード幅に合わせて変える。原画は幅96pxに対して帯11px＝約12%なので、
+     固定12pxのままだと看板娘の5枠×狭い端末（カード66px）で帯が18%まで太り、
+     中身の幅が48pxまで削られて「なでてあげよう」等が折り返す */
+  .card.framed { --fw: 12px; }
+  #shopCards.slim .card.framed { --fw: 10px; }              /* 看板娘の5枠 */
+  @media (max-width: 400px) {
+    .card.framed { --fw: 11px; }
+    #shopCards.slim .card.framed { --fw: 8px; }
+  }
+  .card.framed {
+    border: 0;                        /* border-image-source は render.js がインラインで入れる */
+    border-image-slice: 15 fill;      /* 96×120 の外周15px＝帯＋角の飾り */
+    border-image-width: var(--fw);
+    border-image-repeat: stretch;
+    /* padding は border-image-width とほぼ同じにすること。大きく下回ると中身が帯の上に乗る
+       （下だけ 9px にしていて系統バッジが木枠に食い込んだ）。
+       左右は帯より2px内側まで許す（原画の側面の帯は角より細いため）。
+       増えた分は gap を詰めて相殺し、カードの高さを 137px 以下に保つ
+       — #battleLog(128px) との差が広がると開戦の瞬間に盤面が跳ねる */
+    padding: var(--fw) calc(var(--fw) - 2px);
+    gap: 1px;
+    box-shadow: 0 3px 0 #00000088;
+    /* ■ 地のグラデーションは content-box までに切ること
+       枠絵の外周1〜4px（角はもっと）は透明なので、border-box のまま敷くと
+       .card の羊皮紙色(#f1e3c4)が絵の外側にはみ出し、**枠の周りに白い余白**として見える。
+       content-box に切れば padding(12/9px)の内側だけになり、必ず絵の下に隠れる。
+       絵が落ちたときの受け皿としては残るので、文字が背景に溶けることもない */
+    background-clip: content-box;
+  }
+  /* 枠絵が付いたぶん、地色・縁取りの重ね描きは外す（絵と喧嘩する）。
+     ※ background の一括指定は background-clip を border-box に戻してしまうので、
+       ここでは longhand で書くこと（白い余白が復活する） */
+  .card.framed.tier2, .card.framed.tier3 { box-shadow: 0 3px 0 #00000088; }
+  .card.framed.dogcard, .card.framed.nursecard, .card.framed.akanecard, .card.framed.viscard {
+    background-image: linear-gradient(180deg, var(--parchment), var(--parchment-dim));
+    background-clip: content-box;
+    box-shadow: 0 3px 0 #00000088;
+  }
+  /* 枠絵のぶん中身の幅が減るので、はみ出す文字は詰める。
+     ※ .card に min-width:0 が要る: flex項目の既定 min-width:auto は「中身より狭くならない」ので、
+       名前が長い1枚（くたびれた老人）だけカードが太り、並びが不揃いになる（実際になった）。
+     ※ .card 自体に overflow:hidden は付けないこと — コストバッジと「合体!」は枠の外へ出している */
+  .card.framed .cname {
+    font-size: 8.8px;
+    width: 100%; text-align: center;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .card.framed .btag { padding: 1px 5px; max-width: 100%; overflow: hidden; }
+  .card.framed .cstats { max-width: 100%; overflow: hidden; }
   .card:active { transform: translateY(2px); box-shadow: 0 1px 0 #000000aa; }
   .card.sold { pointer-events: none; filter: grayscale(1) brightness(.5); transform: scale(.95); }
   .card.sold::after {
@@ -736,11 +798,36 @@
     display: flex; align-items: center; justify-content: center;
     border: 2px solid #4a3000; box-shadow: 0 1px 3px #000;
   }
+  /* 買えば★が上がるカード。到達する★をバッジに出し、枠そのものも光らせる。
+     ★が高いほど強く光らせるのは「★4に届く1枚」を見逃さないため
+     （以前は★1同士しか判定しておらず、★4に届くカードも普通の「合体!」でしかなかった）。
+     box-shadow のアニメは Tier色の枠(.tier3)やロック(.locked)の影に勝つので、
+     持ち上げの影 0 3px 0 は各キーフレームに必ず残すこと（残さないとカードが紙のように潰れる） */
   .card .mergeHint {
     position: absolute; top: -8px; right: -4px;
     background: var(--win); color: #fff; font-size: 9px; font-weight: 900;
     padding: 2px 6px; border-radius: 999px; border: 1px solid #2c5424;
     animation: hintbounce 1s infinite;
+    white-space: nowrap;
+  }
+  .card .mergeHint.up3 { background: linear-gradient(180deg, #f3c556, #d09a1e); border-color: #7a5510; color: #402c00; }
+  .card .mergeHint.up4 { background: linear-gradient(90deg, #ffd66e, #ff8fd6, #7ecbff); border-color: #fff; color: #2a1c3a; }
+  .card.willmerge.up2 { animation: mergeGlow2 1.3s ease-in-out infinite; }
+  .card.willmerge.up3 { animation: mergeGlow3 1.1s ease-in-out infinite; }
+  .card.willmerge.up4 { animation: mergeGlow4 1.6s linear infinite; }
+  @keyframes mergeGlow2 {
+    0%, 100% { box-shadow: 0 3px 0 #000000aa, 0 0 6px #b9cbe0aa; }
+    50%      { box-shadow: 0 3px 0 #000000aa, 0 0 16px 3px #dbe7f5; }
+  }
+  @keyframes mergeGlow3 {
+    0%, 100% { box-shadow: 0 3px 0 #000000aa, 0 0 8px #e8b33daa; }
+    50%      { box-shadow: 0 3px 0 #000000aa, 0 0 22px 5px #ffd66e; }
+  }
+  @keyframes mergeGlow4 {
+    0%   { box-shadow: 0 3px 0 #000000aa, 0 0 22px 5px #ffd66e; }
+    33%  { box-shadow: 0 3px 0 #000000aa, 0 0 22px 5px #ff8fd6; }
+    66%  { box-shadow: 0 3px 0 #000000aa, 0 0 22px 5px #7ecbff; }
+    100% { box-shadow: 0 3px 0 #000000aa, 0 0 22px 5px #ffd66e; }
   }
   /* 🔒取り置きバッジ: ロック中のみ、コストバッジと対の位置（右上）に出す。普段は何も表示しない */
   .card .lockMark {
@@ -882,6 +969,46 @@
     pointer-events: none; z-index: 46;
     box-shadow: 0 0 5px #fff8;
   }
+
+  /* ───── ★アップの見せ場（fx.js starUpFx）─────
+     #fx の子＝画面座標。盤の中央に出す（横持ちで画面中央は盤と酒場の継ぎ目になるため）。
+     操作は止めないので pointer-events:none。色は JS が --su（本体）/--sug（光）に流し込む */
+  .starup {
+    position: absolute; z-index: 47;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    pointer-events: none;
+    filter: drop-shadow(0 6px 16px #000a);
+  }
+  /* ★3以上の放射光。conic の縞をリングマスクで抜き、中心（＝駒の絵）は透かす */
+  .starup .su-rays {
+    position: absolute; left: 50%; top: 42%;
+    width: 210px; height: 210px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(var(--sug) 0deg 5deg, transparent 5deg 26deg);
+    -webkit-mask: radial-gradient(closest-side, transparent 20%, #000 44%, transparent 100%);
+            mask: radial-gradient(closest-side, transparent 20%, #000 44%, transparent 100%);
+    pointer-events: none;
+  }
+  .starup .su-port {
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 16px;
+    background: radial-gradient(circle at 45% 34%, #ffffff55, transparent 68%);
+    filter: drop-shadow(0 0 14px var(--sug));
+  }
+  .starup .su-port .uimg { width: 100%; height: 100%; }
+  .starup .su-stars { display: flex; gap: 1px; line-height: 1; }
+  .starup .su-stars i {
+    font-style: normal; font-size: 23px; color: var(--su);
+    text-shadow: 0 0 12px var(--sug), 0 2px 2px #000;
+  }
+  .starup .su-name {
+    font-size: 13px; font-weight: 900; letter-spacing: .04em;
+    color: var(--su); text-shadow: 0 0 9px var(--sug), 0 1px 2px #000;
+  }
+  /* ★4だけの画面フラッシュ。#fx が fixed/inset:0 なので inset:0 で画面全面になる。
+     ※ opacity:0 を必ず持たせること。素の状態が opacity:1 だと、アニメが終わってから
+       onfinish で消えるまでの1フレーム、画面が真っ白に塗り潰される */
+  .suflash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
 
   #slam {
     position: fixed; inset: 0;
@@ -1036,6 +1163,21 @@
     -webkit-mask: radial-gradient(closest-side, transparent 46%, #000 56%, #000 94%, transparent 100%);
             mask: radial-gradient(closest-side, transparent 46%, #000 56%, #000 94%, transparent 100%);
     filter: drop-shadow(0 0 6px var(--aoe));
+  }
+  /* 遠隔の範囲攻撃の着弾衝撃波。着弾マスを中心に、3×3（＝ダメージ範囲）の縁まで広がって消える。
+     輪は border ではなく radial-gradient の帯: border だと scale で線まで太り、
+     小さいうちは 1px を割って消えてしまう。帯なら縮尺に関係なく輪として見える。
+     .aoecell と同じ z-index 1 ＝ 地面の層（駒より前には出ない）。
+     --aoe0 は「同じ色の透明」。素の transparent へ補間するとグレーに濁る（fx.js の aoeFade） */
+  .shockfx {
+    position: absolute; pointer-events: none; z-index: 1;
+    border-radius: 50%;
+    /* 塗りを mask でドーナツに抜く（.sweepfx と同じ手口）。gradient の帯だけだと
+       ぼやけた円板になり「輪が走った」ように見えなかった。外へ行くほど白く熱い */
+    background: radial-gradient(closest-side, var(--aoe) 40%, #ffffff 100%);
+    -webkit-mask: radial-gradient(closest-side, transparent 54%, #000 74%, #000 90%, transparent 100%);
+            mask: radial-gradient(closest-side, transparent 54%, #000 74%, #000 90%, transparent 100%);
+    filter: drop-shadow(0 0 9px var(--aoe));
   }
   .burncell {
     position: absolute; pointer-events: none; z-index: 1;
