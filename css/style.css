@@ -519,10 +519,24 @@
        ★・ボス・立ち絵で別々に詰めてあり、flow に3px足すと全部ずれる。
        外に出せば箱の高さは .tport だけになり、transform-origin(50% 100%)＝足元も
        ちょうど絵の下辺に一致する（足元の影 .tsh の bottom:0 も正しくなる）。
-     ※ render.js の TOK_H は「flowに載る高さ」なので 54 → 50 に合わせてある */
+     ※ render.js の TOK_H は「flowに載る高さ」なので 54 → 50 に合わせてある
+
+     ■ 高さを詰めるときの top の基準は「.tport の箱の上端」であって「頭の上端」ではない。
+       この2つは一致しない:
+       - クラシック(絵文字)表示: .tport は border-box の円が箱いっぱいに描かれるので、
+         箱の上端＝頭（円）の上端。top:-3px（高さ3pxぶん）で厳密にゼロ距離まで詰まる。
+       - 立ち絵(hasimg)表示: .tport は 46×50（正方形の絵に対して縦长）。
+         object-fit:contain は幅46基準で高さ46に収まり、余った 50-46=4px は
+         object-position:bottom により**箱の上側に丸ごと空く**（＝透明な余白）。
+         さらに絵そのものの中にも少量の余白がある（手持ちのドット絵4種を実測: 頭頂は
+         キャンバス上端から 1%〜9%＝約0.5〜4.3px）。合計で箱の上端から頭の上端まで
+         実測 約4.5〜8px の見えない距離があり、クラシックと同じ top では全く詰まらない。
+       → 表示モードごとに別の top を持たせること。立ち絵側は「箱の上端に揃える(0px)」
+         だけで、透明な余白がそのまま安全マージンになり、どの絵柄でも重ならない
+         （実測した最小の余白でも約4.5px残る）。 */
   .tok .thp {
     position: absolute;
-    left: 50%; top: -6px;
+    left: 50%; top: -3px;             /* クラシック(絵文字)表示: 円の上端＝頭の上端に厳密フィット */
     width: 24px; height: 3px;
     margin-left: -12px;
     border-radius: 2px;
@@ -530,6 +544,7 @@
     overflow: hidden;
     pointer-events: none;
   }
+  .tok.hasimg .thp { top: 0; }        /* 立ち絵表示: 箱の上端＝絵の透明な余白の内側（実測で頭に重ならない） */
   .tok .thp i {
     display: block; height: 100%;
     background: linear-gradient(90deg, #8ed47c, #5da34c);
