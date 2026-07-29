@@ -104,8 +104,11 @@ try {
     <div id="shopArea">
       <div id="shopTitle"><span id="shopName">🍺 酒場の募兵</span><span id="incomeNote"></span></div>
       <div id="tierOdds"></div>
-      <div id="shopCards"></div>
-      <div id="battleLog"></div>
+      <!-- 募兵カードと実況ログは同じ枠に重ねる（#shopStage）。高さは常にカード側が決める（CSS参照） -->
+      <div id="shopStage">
+        <div id="shopCards"></div>
+        <div id="battleLog"></div>
+      </div>
       <div id="shopBtns">
         <button class="btn" id="rerollBtn">🎲 1G</button>
         <button class="btn" id="lockModeBtn" title="取り置き">🔒</button>

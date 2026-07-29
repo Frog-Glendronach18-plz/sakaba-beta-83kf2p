@@ -674,27 +674,37 @@
   .todds.t3 { background: var(--t3); }
   /* 0%（宴で出ないTier）は暗く沈めて「来ない」ことをひと目で示す */
   .todds.zero { background: #ffffff14; color: #ffffff55; }
-  /* min-height は「戦闘に入ると盤面が跳ねる」対策。肖像枠が幅追従(aspect-ratio)なので、
-     看板娘の店(5枠)ではカードが細く＝低くなり、実況ログ(#battleLog)と高さがずれる。
-     下限を揃えておけば 4枠でも5枠でも #shopArea の高さが変わらない。
+  /* ───── 募兵カードと実況ログの共有枠 ─────
+     「開戦の瞬間に盤面が跳ねる」対策。この枠の高さは **常に募兵カード側だけ** が決め、
+     実況ログは絶対配置＝レイアウト上の高さを持たないので、⚔️で入れ替えても
+     #shopArea の高さは1pxも動かない（＝#boardWrap に余りが渡らない）。
+     カードの高さは固定できない: 肖像枠が幅追従(aspect-ratio)なので画面幅で 121〜131px と動き、
+     珍客（ワンコ/ネコ/ナース/ｱｶﾈﾁｬﾝ）と疲れた実力者は説明文が2行に折り返してさらに +11px 伸びる。
+     ※ 以前は #shopCards の min-height と #battleLog の height を手で揃えていたが、
+       一致するのは「特定の画面幅 × 珍客のいない募兵」だけで、それ以外では必ずずれていた */
+  #shopStage { position: relative; }
+  /* min-height は実況ログの下限（カードが低い狭幅端末でも実況が窮屈にならない高さ）。
+     跳ね対策ではないので #battleLog と揃える必要はもう無い。
      ※ 横持ちでは html.lay-land #shopCards が min-height:0 で打ち消す（縦に伸ばして使うため） */
   #shopCards { display: flex; gap: 6px; justify-content: center; min-height: 128px; }
 
   /* ───── 戦況実況ログ（戦闘中は募兵枠を再利用）───── */
   #battleLog {
     display: none;               /* 戦闘中のみ #shopArea.battling で表示 */
+    position: absolute; inset: 0; /* 募兵カードの枠にぴったり重ねる。
+                                     高さを持たない＝カードの高さがそのまま酒場の高さになる */
     flex-direction: column;
     justify-content: flex-end;    /* 下端に最新、古いものは上へ押し上げられて流れる */
     align-items: stretch;
-    height: 128px;                /* 募兵カードと同じ高さ＝戦闘切替で盤面がずれない。
-                                     .card の高さを変えたらこの値も合わせること（ずれると開戦の瞬間に盤面が跳ねる） */
     overflow: hidden;
     padding: 0 2px;
     gap: 2px;
     -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 36%, #000 100%);
             mask-image: linear-gradient(180deg, transparent 0, #000 36%, #000 100%);
   }
-  #shopArea.battling #shopCards { display: none; }
+  /* display:none にしてはいけない — 枠の高さを決めているのはカード側なので、消すと高さが失われて盤が跳ねる。
+     visibility なら場所を取ったまま消え、タップも通らない */
+  #shopArea.battling #shopCards { visibility: hidden; }
   #shopArea.battling #battleLog { display: flex; }
 
   .blog-entry {
@@ -831,7 +841,7 @@
        （下だけ 9px にしていて系統バッジが木枠に食い込んだ）。
        左右は帯より2px内側まで許す（原画の側面の帯は角より細いため）。
        増えた分は gap を詰めて相殺し、カードの高さを 137px 以下に保つ
-       — #battleLog(128px) との差が広がると開戦の瞬間に盤面が跳ねる */
+       — 実況ログは #shopStage で追従するので跳ねはしないが、酒場が伸びたぶん盤面が削られる */
     padding: var(--fw) calc(var(--fw) - 2px);
     gap: 1px;
     box-shadow: 0 3px 0 #00000088;
@@ -1869,8 +1879,7 @@
   /* シナジータブ: 酒場はボタンだけの高さに縮む（⚔️戦闘開始は常に押せる） */
   html.lay-land #side[data-tab="syn"] #shopTitle,
   html.lay-land #side[data-tab="syn"] #tierOdds,
-  html.lay-land #side[data-tab="syn"] #shopCards,
-  html.lay-land #side[data-tab="syn"] #battleLog { display: none; }
+  html.lay-land #side[data-tab="syn"] #shopStage { display: none; }
   html.lay-land #side[data-tab="syn"] #shopArea { flex: 0 0 auto; }
   html.lay-land #side[data-tab="syn"] #synergy {
     flex: 1 1 auto; min-height: 0; overflow-y: auto;
@@ -1879,6 +1888,7 @@
 
   /* 縦長パネルを使い切る。padding-top は必須（.cost バッジが top:-7px なので
      overflow:auto の切り取り box で上端が欠ける） */
+  html.lay-land #shopStage { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
   html.lay-land #shopCards {
     flex: 1 1 auto; min-height: 0;
     flex-wrap: wrap; align-content: flex-start;
@@ -1886,7 +1896,7 @@
     padding: 9px 4px 4px;
   }
   html.lay-land #shopCards .card { flex: 1 1 78px; max-width: 110px; }
-  html.lay-land #battleLog { height: auto; flex: 1 1 auto; min-height: 0; }
+  /* 実況ログは縦持ちと同じく inset:0 で枠いっぱい＝高さの指定は要らない */
 
   /* オーバーレイのパネルは横向きだと画面高さを超える（body は overflow:hidden で
      スクロールできない＝タイトル/ヘルプ/図鑑/闘技場が操作不能になる）ので必ずスクロール可に */
