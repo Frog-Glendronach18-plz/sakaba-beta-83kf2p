@@ -3,7 +3,7 @@
    ファイルを更新して公開するときは CACHE_VERSION を上げること（古いキャッシュは自動削除される） */
 'use strict';
 
-const CACHE_VERSION = 'sakaba-v1.38.2';  // アプリ本体（コード変更で上げる）
+const CACHE_VERSION = 'sakaba-v1.40.0';  // アプリ本体（コード変更で上げる）
 const MEDIA_CACHE = 'sakaba-media-v2';   // BGM（音源を差し替えたときだけ上げる）
 const FONT_CACHE = 'sakaba-fonts-v1';
 
@@ -25,6 +25,8 @@ const MEDIA = [
    ※列挙し忘れてもオンライン時は通常キャッシュで表示される（オフライン初回のみ欠ける） */
 const UNIT_ART = [
   './img/map_sample2.webp',   // 盤面背景アトラス（4×4・1088×1448・WebP）。ベストエフォート（失敗してもオンライン時に取得）
+  // 地形の小物（盤に散る草花）。data.js の BIOMES[].props と対で増やす
+  './img/map/glass1.png', './img/map/glass2.png', './img/map/flower1.png',
   // ドット絵ユニット（全身立ち絵）。定義に img: を足すたびここにも列挙する（現在は味方18体・仮絵）
   './img/units/sword.png', './img/units/guard.png', './img/units/appr.png', './img/units/pedl.png',
   './img/units/prayr.png', './img/units/relic.png', './img/units/knight.png', './img/units/blade.png',

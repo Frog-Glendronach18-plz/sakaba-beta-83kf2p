@@ -25,9 +25,13 @@
     --t1: #a9744a;
     --t2: #c4ccd8;
     --t3: #e8b33d;
-    /* 3D 俯瞰ビュー: 傾き角と縦プリストレッチ率（ここで調整可能） */
-    --tilt: 34deg;
-    --stretch: 1.45;
+    /* 3D 俯瞰ビュー: 俯角と縦プリストレッチ率。
+       ※ ここは JS が動くまでの初期値でしかない。実際の値は render.js の
+         updateBoardShape() が盤の実寸から毎回計算して :root に上書きする
+         （端末ごとにマスの奥行き比が2倍以上ばらついていたのを揃えるため）。
+         調整したいのは CELL_DEPTH / TILT_MIN / TILT_MAX の3定数（render.js）。 */
+    --tilt: 44deg;
+    --stretch: 1.39;   /* = 1/cos(44deg)。地面が箱をちょうど埋める比 */
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -204,6 +208,97 @@
     pointer-events: none;
   }
   #board.placing #zoneHint { opacity: 1; }
+
+  /* ═════ 盤の層（奥→手前） ═════
+     #board の直下は元々すべてフラットな兄弟で、駒が行番号(1〜9)、地面の演出が 1、
+     薙ぎ払いが 4 …と z が混ざっていた。結果、薙ぎ払い(4)は自陣(下4行=z6〜9)の駒に
+     必ず負けて隠れ、宝箱は z:auto(=0) でどの行でも全部の駒の後ろに回っていた。
+     層に切り分けて「何が何の前か」を1箇所で決める。
+
+     ■ transform-style: preserve-3d が必須。
+       素の div で包むと、駒のビルボード変形（.tok の rotateX 打ち消し）が
+       包んだ div の面へ潰される。実測: 駒の高さ 50.2px → 29.6px、位置も 20.7px 下へ
+       ずれて地面に寝てしまった。preserve-3d を付けると変形前と完全一致する。
+     ■ pointer-events: none が必須。
+       空きマスのタップは #board 自身が受ける必要がある（team.js onBoardTap は
+       ev.target===board のときだけ offsetX/Y ＝ ブラウザによる3D逆写像を使い、
+       それ以外は clientX/Y の近似にフォールバックしてマスがずれる）。
+       駒だけ pointer-events:auto で拾い直す。
+     ■ 層自体には filter / opacity<1 / overflow:hidden を付けないこと（3Dが潰れる）。 */
+  #board > .ly {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    transform-style: preserve-3d;
+  }
+  /* 演出だけの2層は盤の縁で切る。範囲攻撃の輪は3×3ぶんの大きさがあるので、
+     最下段で撃つと盤の下枠からはみ出す（#board は overflow:visible なので切られない）。
+     ※ transform-style: flat を**明示的に**書くこと。preserve-3d のままだと Chrome は
+       overflow:hidden のクリップを効かせない（実際に効かず、輪が枠外へ出たままだった）。
+     ※ この2層に入るのは .aoecell / .shockfx / .sweepfx / .burncell ＝ 3D変形を
+       持たない要素だけなので flat で問題ない。
+       **ビルボード（駒・草）をこの層へ入れてはいけない**（潰れて地面に寝る） */
+  /* ※ セレクタは #board > を付けること。上の #board > .ly（id+class）の方が詳細度が高く、
+       #lyDecalHi 単独では transform-style が preserve-3d のまま上書きできない */
+  #board > #lyDecalLo, #board > #lyDecalHi { overflow: hidden; border-radius: 12px; transform-style: flat; }
+  #fieldgrid    { z-index: 5; }   /* マス目 */
+  #zoneHint     { z-index: 6; }   /* 配置可能ゾーン */
+  #lyDecalLo    { z-index: 10; }  /* 地面デカール（着弾域・衝撃波・燃える地面） */
+  #lyProps      { z-index: 20; }  /* 地物・奥（岩山・草花） */
+  #predictLayer { z-index: 25; }  /* 攻撃予測ライン: 岩山より上・駒より下（顔を隠さない） */
+  #lyUnits      { z-index: 30; }  /* 駒・宝箱（この中で行番号が z） */
+  #lyGrassHi    { z-index: 40; }  /* 地物・手前（最前列の足元に被さる） */
+  #lyDecalHi    { z-index: 50; }  /* 空中デカール（薙ぎ払いの軌跡） */
+  #predictHeads { z-index: 56; }  /* 矢じりは駒より上 */
+  #lyLight      { z-index: 60; }  /* 光 */
+  /* 層が pointer-events:none なので、拾いたいものだけ戻す。
+     宝箱は元々クリックしても何も起きないので none のまま＝タップが盤へ抜け、
+     空きマス扱いになる（従来は宝箱が target になり、3D逆写像に乗らない
+     clientX/Y 経路へ落ちてマスがずれていた） */
+  #lyUnits .tok { pointer-events: auto; }
+
+  /* ───── 地形の小物（草花・img/map/*.png 32×32）─────
+     駒(.tok)と同じビルボード変形で立てる。transform-origin が足元なので、
+     どれだけ拡縮しても接地点（style の top）は動かない＝草が浮かない。
+     ※ 変形の打ち消しは親（層）が preserve-3d でないと効かない。上の「盤の層」参照 */
+  .prop {
+    position: absolute;
+    width: var(--pw, 24px); height: var(--pw, 24px);
+    margin-left: calc(var(--pw, 24px) / -2);
+    margin-top: calc(var(--pw, 24px) * -1);   /* 絵の下端を top の線に合わせる＝そこが接地点 */
+    image-rendering: pixelated;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    transform-origin: 50% 100%;
+    transform: scaleY(calc(1 / var(--stretch))) rotateX(calc(-1 * var(--tilt))) scale(var(--tok-scale, 1));
+  }
+  /* 風で揺らす。transform だけのアニメ＝合成のみで動くので枚数が増えても負荷は乗らない。
+     ※ keyframe には打ち消し変換ごと書くこと。rotate だけ書くと transform が丸ごと
+       置き換わり、草が寝てしまう（アニメーション由来の値は宣言より強い） */
+  @media (prefers-reduced-motion: no-preference) {
+    .prop { animation: propsway 3.9s ease-in-out infinite; }
+    #lyGrassHi .prop { animation-duration: 4.7s; }
+    .prop:nth-child(2n) { animation-delay: -1.3s; }
+    .prop:nth-child(3n) { animation-delay: -2.6s; }
+    .prop:nth-child(5n) { animation-delay: -.7s; }
+  }
+  @keyframes propsway {
+    0%, 100% { transform: scaleY(calc(1 / var(--stretch))) rotateX(calc(-1 * var(--tilt))) scale(var(--tok-scale, 1)) rotate(-1.6deg); }
+    50%      { transform: scaleY(calc(1 / var(--stretch))) rotateX(calc(-1 * var(--tilt))) scale(var(--tok-scale, 1)) rotate(1.6deg); }
+  }
+
+  /* ───── 光の層 ─────
+     写真でいうグレーディング。絵は足さず、地形・駒・演出の「上から」まとめて色を掛ける。
+       ① 空気遠近: 奥（盤の上端）ほど霞ませる。色は地形ごと（BIOMES[].haze → --haze）
+       ② ビネット: 四隅を落として中央へ視線を集める
+     ※ mix-blend-mode は使わない。3D空間(preserve-3d)の中で合成モードを使うと
+       ブラウザによっては層が平面化される。素のアルファ合成だけで足りる。
+     ※ --haze0 は「同じ色のゼロアルファ」。素の transparent へ補間するとグレーに濁る */
+  #lyLight {
+    border-radius: 12px;
+    background:
+      radial-gradient(ellipse 84% 76% at 50% 44%, #00000000 50%, #00000014 74%, #00000047 100%),
+      linear-gradient(180deg, var(--haze, #cfe0ea3d) 0%, var(--haze0, #cfe0ea00) 40%);
+  }
   /* 地形画像モードのマス目オーバーレイ（7×9）。クラシックは盤の背景自体が格子なので使わない。
      デフォルト(image)は配置・移動時(.placing)だけ、imagegridは常時うっすら表示。線は明色で
      暗い地形(草原/岩地/溶岩)によく乗る。雪原では淡いが、明るい地形はマスが見やすいので許容 */
@@ -234,17 +329,33 @@
        縦向きでは変数が無く scale(1)＝無操作。原点が足元なので接地位置は動かない */
     transform: scaleY(calc(1 / var(--stretch))) rotateX(calc(-1 * var(--tilt))) scale(var(--tok-scale, 1));
   }
+  /* 足元の影。二重にして「接地」を作る:
+       ① 中心の濃い核 = 接地点。ここが締まっていないと駒が浮いて見える
+       ② 外側の淡い半影 = 光の回り込み。単層のぼかしだけだと綿のような塊になる
+     色は --shc（rgbの3値）で差し替える。陣営で染めるとき background を上書きすると
+     二層構造ごと消えるので、必ず変数側を変えること。
+     ※ 盤を寝かせても影の形はほぼ変わらない（実測: 30×8px の楕円が地面に寝ると 30×9.6px。
+       盤の rotateX(34°) を scaleY(1.45) がほぼ打ち消すため）。地面の層へ移す価値は無い */
   .tok .tsh {
+    --shc: 0, 0, 0;
     position: absolute;
     bottom: -3px; left: 50%;
-    width: 26px; height: 8px;
-    margin-left: -13px;
+    width: 28px; height: 9px;
+    margin-left: -14px;
     border-radius: 50%;
-    background: radial-gradient(ellipse at center, #00000066, transparent 68%);
+    background:
+      radial-gradient(ellipse 44% 62% at 50% 54%, rgba(var(--shc), .60) 0%, rgba(var(--shc), 0) 100%),
+      radial-gradient(ellipse at center, rgba(var(--shc), .34) 0%, rgba(var(--shc), .15) 52%, rgba(var(--shc), 0) 78%);
     z-index: -1;
     pointer-events: none;
   }
-  .tok.boss .tsh, .tok.s3 .tsh, .tok.s4 .tsh { width: 32px; margin-left: -16px; height: 10px; }
+  /* 駒が idlebob で浮いた分だけ影を縮めて薄くする（周期・遅延は .tport と揃える）。
+     影が固定のままだと、上下しているのに接地しっぱなしに見えてしまう */
+  @keyframes shbob { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.88); opacity: .72; } }
+  .tok .tsh { animation: shbob 2.6s ease-in-out infinite; }
+  .tok:nth-child(2n) .tsh { animation-delay: -.8s; }
+  .tok:nth-child(3n) .tsh { animation-delay: -1.6s; }
+  .tok.boss .tsh, .tok.s3 .tsh, .tok.s4 .tsh { width: 34px; margin-left: -17px; height: 11px; }
   .tok.hid { opacity: .45; } /* 隠れ身中は薄く表示 */
   .tok .tport {
     width: 25px; height: 25px;
@@ -402,11 +513,22 @@
   .tok.spawn { animation: spawnin .35s cubic-bezier(.34,1.56,.64,1); }
   @keyframes spawnin { from { transform: scaleY(calc(1 / var(--stretch))) rotateX(calc(-1 * var(--tilt))) scale(calc(var(--tok-scale, 1) * .2)); opacity: 0; } }
 
+  /* HPバーは頭上。俯角を深くして駒が前後に重なるようにしたので、
+     足元に置くと前列の駒に隠れて読めなくなる（隠れるのは足元だけ＝頭上は必ず見える）。
+     ※ position:absolute で flow から外すのが肝。.tok の margin-top は
+       ★・ボス・立ち絵で別々に詰めてあり、flow に3px足すと全部ずれる。
+       外に出せば箱の高さは .tport だけになり、transform-origin(50% 100%)＝足元も
+       ちょうど絵の下辺に一致する（足元の影 .tsh の bottom:0 も正しくなる）。
+     ※ render.js の TOK_H は「flowに載る高さ」なので 54 → 50 に合わせてある */
   .tok .thp {
+    position: absolute;
+    left: 50%; top: -6px;
     width: 24px; height: 3px;
+    margin-left: -12px;
     border-radius: 2px;
     background: #00000088;
     overflow: hidden;
+    pointer-events: none;
   }
   .tok .thp i {
     display: block; height: 100%;
@@ -416,12 +538,16 @@
   }
   .tok .thp i.low { background: linear-gradient(90deg, #e3a24a, #d4583a); }
   .tok .tstars {
-    position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    position: absolute; top: -15px; left: 50%; transform: translateX(-50%);   /* 頭上のHPバーの上へ */
     font-size: 8px; color: var(--gold); line-height: 1;
     text-shadow: 0 0 4px #b07f1e, 0 1px 1px #000;
     letter-spacing: -1px;
     pointer-events: none;
   }
+  /* 戦闘が始まったら★は消す。星は「編成をどう組んだか」の情報で、戦闘中に要るのは
+     生死＝HPだけ。俯角を深くして駒が重なるぶん、頭上の情報は1本に絞る。
+     （render.js が S.phase==='battle' で #board に .battling を付ける） */
+  #board.battling .tstars { display: none; }
   .tok .tstars.s3 { animation: starglow 1.4s infinite; }
   @keyframes starglow { 50% { text-shadow: 0 0 9px var(--gold), 0 1px 1px #000; } }
 
@@ -1115,11 +1241,11 @@
   /* ターゲット予測ライン（配置フェーズ） */
   #predictLayer {
     position: absolute; inset: 0; width: 100%; height: 100%;
-    pointer-events: none; z-index: 2; /* 岩山(.rock=z1)より上に予測ラインを出す */
+    pointer-events: none;   /* z-index は上の「盤の層」でまとめて決めている */
   }
   #predictHeads {
     position: absolute; inset: 0; width: 100%; height: 100%;
-    pointer-events: none; z-index: 20; /* 矢じり（頭の三角）はキャラアイコンより上に */
+    pointer-events: none;   /* z-index は上の「盤の層」でまとめて決めている */
   }
   #predictLayer line {
     stroke-dasharray: .28 .18;
@@ -1150,12 +1276,11 @@
       radial-gradient(closest-side at 68% 50%, var(--c2) 0%, var(--c2o) 76%);
   }
 
-  /* 範囲攻撃の着弾域（3×3）。#board の子なので盤の3D変形に乗り、地面に寝た魔法陣として出る。
-     色は fx.js が --aoe に流し込む（術=紫 / 神話魔法=燃焼色）。
-     z-index は燃える地面(.burncell)と同じ 1。駒(.tok)は行ごとに 1〜9 を持ち DOM 上も後ろなので、
-     同値でも駒が上に来る＝面が駒を隠さない */
+  /* 範囲攻撃の着弾域（3×3）。#lyDecalLo（地面の層）の子なので盤の3D変形に乗り、
+     地面に寝た魔法陣として出る。色は fx.js が --aoe に流し込む（術=紫 / 神話魔法=燃焼色）。
+     駒より前に出ないことは層が保証する（以前は z:1 と駒の行番号が競合していた） */
   .aoecell {
-    position: absolute; pointer-events: none; z-index: 1;
+    position: absolute; pointer-events: none;
     border-radius: 10px;
     border: 2px solid var(--aoe);
     background: radial-gradient(ellipse at 50% 50%, var(--aoe) 0%, var(--aoe0, transparent) 68%);
@@ -1164,10 +1289,12 @@
   /* 近接の薙ぎ払いの軌跡。conic-gradient で「先端が明るい弧」を作り、
      mask でドーナツ状に抜いて刃の通り道だけを残す（塗り潰しの扇にしない）。
      mask 未対応の環境では扇形になるだけで、演出として破綻はしない。
-     駒より前(z-index 4)に出す。地面の面(.aoecell=1)と役割が違い、
-     こちらは「振り抜いた刃」なのでキャラの手前を通ってよい */
+     置き場は #lyDecalHi（駒より手前の層）。地面に寝る .aoecell と役割が違い、
+     こちらは「振り抜いた刃」なのでキャラの手前を通ってよい。
+     ※ かつては #board 直下の z-index:4 だった。駒の z は行番号(1〜9)なので、
+       自陣（下4行＝6〜9）では必ず駒に負けて軌跡が丸ごと隠れていた */
   .sweepfx {
-    position: absolute; pointer-events: none; z-index: 4;
+    position: absolute; pointer-events: none;
     border-radius: 50%;
     /* --aoe0 は「同じ色の透明」（fx.js が hex+00 を入れる）。素の transparent へ補間すると
        黒を経由してグレーに濁るため、必ず同色ゼロアルファへ向かって消すこと */
@@ -1181,10 +1308,10 @@
   /* 遠隔の範囲攻撃の着弾衝撃波。着弾マスを中心に、3×3（＝ダメージ範囲）の縁まで広がって消える。
      輪は border ではなく radial-gradient の帯: border だと scale で線まで太り、
      小さいうちは 1px を割って消えてしまう。帯なら縮尺に関係なく輪として見える。
-     .aoecell と同じ z-index 1 ＝ 地面の層（駒より前には出ない）。
+     .aoecell と同じ #lyDecalLo ＝ 地面の層（駒より前には出ない）。
      --aoe0 は「同じ色の透明」。素の transparent へ補間するとグレーに濁る（fx.js の aoeFade） */
   .shockfx {
-    position: absolute; pointer-events: none; z-index: 1;
+    position: absolute; pointer-events: none;
     border-radius: 50%;
     /* 塗りを mask でドーナツに抜く（.sweepfx と同じ手口）。gradient の帯だけだと
        ぼやけた円板になり「輪が走った」ように見えなかった。外へ行くほど白く熱い */
@@ -1194,7 +1321,7 @@
     filter: drop-shadow(0 0 9px var(--aoe));
   }
   .burncell {
-    position: absolute; pointer-events: none; z-index: 1;
+    position: absolute; pointer-events: none;   /* 置き場は #lyDecalLo（地面の層） */
     background: radial-gradient(circle at 50% 55%, #b06cff55 0%, #8a4fe044 45%, #6a3ab810 78%, transparent 100%);
     box-shadow: inset 0 0 10px #b06cff66;
     border-radius: 6px;
@@ -1543,11 +1670,15 @@
   .tok.hasimg.boss { margin-top: -54px; }
   .tok.hasimg.boss .tport { width: 58px; height: 64px; }   /* ボス（魔王）は一回り大きく */
   /* 陣営識別: 足元の影を薄く染める（円メダルは復活させない） */
-  .tok.hasimg .tsh { bottom: 0; width: 30px; height: 8px; margin-left: -15px; }  /* 立ち絵の足元にぴたりと影を置く */
-  .tok.hasimg.boss .tsh { width: 40px; margin-left: -20px; }
-  .tok.hasimg.foe .tsh { background: radial-gradient(ellipse at center, #d0503366, transparent 70%); }
-  #board.arena .tok.hasimg:not(.foe) .tsh { background: radial-gradient(ellipse at center, #4a90d266, transparent 70%); }
-  #board.arena .tok.hasimg.foe .tsh { background: radial-gradient(ellipse at center, #d0503366, transparent 70%); }
+  .tok.hasimg .tsh { bottom: 0; width: 31px; height: 9px; margin-left: -15.5px; }  /* 立ち絵の足元にぴたりと影を置く */
+  /* 大きい駒ほど影も大きい＝重さの手がかり（.tok.hasimg .tsh が上書きしてしまうので個別に書く） */
+  .tok.hasimg.s3 .tsh { width: 35px; margin-left: -17.5px; height: 10px; }
+  .tok.hasimg.s4 .tsh { width: 38px; margin-left: -19px; height: 11px; }
+  .tok.hasimg.boss .tsh { width: 44px; margin-left: -22px; height: 12px; }
+  /* 陣営の染め分けは色変数だけ差し替える。background を上書きすると二層構造ごと消える */
+  .tok.hasimg.foe .tsh { --shc: 176, 62, 42; }
+  #board.arena .tok.hasimg:not(.foe) .tsh { --shc: 46, 100, 158; }
+  #board.arena .tok.hasimg.foe .tsh { --shc: 176, 62, 42; }
   .tok.hasimg.selected .uimg { filter: drop-shadow(0 0 3px #ffe08a) drop-shadow(0 1px 0 #00000066); }
 
   /* ── ★・エースの光り物を「絵の形」に沿わせる ──

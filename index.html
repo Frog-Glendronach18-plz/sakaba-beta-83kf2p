@@ -73,11 +73,22 @@ try {
     <div id="boardLabel"><span id="enemyLabel">敵陣 — 次の対戦相手</span><span id="teamCount">自陣（下4行に配置）</span></div>
     <div id="warGauge"><div id="wgFill"></div><span id="wgAllyPct"></span><span id="wgFoePct"></span></div>
     <div id="rumorLine"></div>
+    <!-- 盤の層。奥→手前の順に並べる（実際の前後は CSS の z-index が決める）。
+         ※ 層の div には transform-style:preserve-3d が要る（style.css の「盤の層」参照）。
+           素の div で包むと駒のビルボード変形が親の面へ潰れ、駒が地面に寝てしまう。
+         ※ 層は pointer-events:none。空きマスのタップは #board 自身が受ける必要がある
+           （team.js の onBoardTap が ev.target===board のときだけ 3D 逆写像の offsetX/Y を使う） -->
     <div id="board">
       <div id="fieldgrid"></div>
-      <svg id="predictLayer" viewBox="0 0 7 9" preserveAspectRatio="none"></svg>
-      <svg id="predictHeads" viewBox="0 0 7 9" preserveAspectRatio="none"></svg>
       <div id="zoneHint"></div>
+      <div id="lyDecalLo" class="ly"></div><!-- 地面に寝るもの: 着弾域・衝撃波・燃える地面 -->
+      <div id="lyProps"   class="ly"></div><!-- 地物(奥): 岩山・草花 -->
+      <svg id="predictLayer" viewBox="0 0 7 9" preserveAspectRatio="none"></svg>
+      <div id="lyUnits"   class="ly"></div><!-- 駒・宝箱。この中では行番号が z になる -->
+      <div id="lyGrassHi" class="ly"></div><!-- 地物(手前): 最前列の足元に被さる草 -->
+      <div id="lyDecalHi" class="ly"></div><!-- 空中を通るもの: 薙ぎ払いの軌跡 -->
+      <svg id="predictHeads" viewBox="0 0 7 9" preserveAspectRatio="none"></svg>
+      <div id="lyLight"   class="ly"></div><!-- 光: 空気遠近・ビネット・地形の色被せ -->
     </div>
   </div>
 
