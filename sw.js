@@ -3,7 +3,7 @@
    ファイルを更新して公開するときは CACHE_VERSION を上げること（古いキャッシュは自動削除される） */
 'use strict';
 
-const CACHE_VERSION = 'sakaba-v1.40.1';  // アプリ本体（コード変更で上げる）
+const CACHE_VERSION = 'sakaba-v1.42.1';  // アプリ本体（コード変更で上げる）
 const MEDIA_CACHE = 'sakaba-media-v2';   // BGM（音源を差し替えたときだけ上げる）
 const FONT_CACHE = 'sakaba-fonts-v1';
 
@@ -45,6 +45,18 @@ const UNIT_ART = [
   './img/units/g_dog.png', './img/units/g_dog2.png', './img/units/g_dog3.png',
   './img/units/g_cat.png', './img/units/g_nurse.png', './img/units/g_akane.png',
   './img/units/vis_war.png', './img/units/vis_tank.png', './img/units/vis_mage.png', './img/units/vis_merc.png',
+  // 武器の切り出し絵（攻撃の瞬間だけ振られる）。data.js の WEAPON_ART と対で増やす
+  './img/units/wepons/sword.png', './img/units/wepons/guard.png', './img/units/wepons/appr.png',
+  './img/units/wepons/relic.png', './img/units/wepons/knight.png', './img/units/wepons/blade.png',
+  './img/units/wepons/genrl.png', './img/units/wepons/amage.png', './img/units/wepons/proph.png',
+  './img/units/wepons/tamer.png', './img/units/wepons/fortr.png', './img/units/wepons/hero.png',
+  './img/units/wepons/allymaou.png', './img/units/wepons/spirit.png', './img/units/wepons/ghost.png',
+  './img/units/wepons/e_maou.png',
+  // タイトル画面の絵とメニューのボタン（ui.js の showStart / MENU_PLATE が参照）
+  './img/ui/title_menue.png',
+  './img/ui/bottan/botan_nomal.png', './img/ui/bottan/botan_endless.png',
+  './img/ui/bottan/botan_tyutorial.png', './img/ui/bottan/botan_ranking.png',
+  './img/ui/bottan/botan_other.png',
   // ゲーム内アイコン（攻撃力・体力など）。CSS の .gi-* が参照する
   './img/ui/atk.png', './img/ui/hp.png', './img/ui/gold.png', './img/ui/cap.png',
   './img/ui/forge.png', './img/ui/star.png', './img/ui/pet.png', './img/ui/threat.png',

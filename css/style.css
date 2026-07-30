@@ -136,6 +136,13 @@
     flex-direction: column;
     gap: 3px;
     perspective: 1300px; /* 子の #board に遠近を与える */
+    /* 盤を枠より横に広げてある（#board の --ovs）ので、あふれた分を**左右だけ**切る。
+       ※ overflow:hidden は使えない。片方の軸だけ visible にはできない仕様なので、
+         上下も切られて「盤の上へ飛び出す駒の頭」が欠ける（実測で頭の飛び出しは最大24px）。
+         clip-path の inset に負値を書くと、その辺は外側へ広がる＝切らない。
+       ※ overflow ではなく clip-path なのは 3D も理由。preserve-3d の祖先に
+         overflow を付けると 3D が平面化されうる（decal層で実際に踏んだ）。 */
+    clip-path: inset(-260px 0 -48px 0);
   }
   #boardLabel {
     display: flex; justify-content: space-between;
@@ -176,6 +183,16 @@
     flex: 1;
     position: relative;
     margin-top: 18px; /* 奥の駒の頭がはみ出す分の余白（ラベル被り対策） */
+    /* 手前（下端）の左右の角を枠の外へ少しはみ出させる＝広角レンズの効き。
+       盤だけを横に広げ、あふれた分は #boardWrap の clip-path が左右だけ切る。
+       ※ 上げすぎ注意: 角のマス(c=0/6, r=8)に置いた駒が画面から切れてはいけない。
+         盤が広がるとマスの中心も外へ動くので、駒の箱の半分(29px)が画面内に残る値が上限。
+         375px幅で実測: 3%=はみ出し0px / 3.5%=1px / 4%=2px / 5%=5px。**3% が上限**。
+       ※ clientWidth が増えるので updateBoardShape / renderField は自動で追従する。
+         盤が横に広がると俯角も自動で深くなる（実測 42.9°→46.5°）＝広角の効きが二重に乗る */
+    --ovs: 3%;
+    width: calc(100% + var(--ovs) * 2);
+    margin-left: calc(var(--ovs) * -1);
     border-radius: 12px;
     overflow: visible; /* preserve-3d を活かすため（駒が盤外へはみ出す演出も許容） */
     border: 2px solid #1c1208;
@@ -313,10 +330,13 @@
   #board.fieldgridalways #fieldgrid { opacity: 1; }
 
   /* ───── map token（盤の変形を打ち消して直立するビルボード） ───── */
+  /* width は「タップ判定の幅」でもある（.tport は 58px までこの箱からはみ出して描かれる）。
+     立ち絵を大きくしたぶん、指で掴める幅も広げてある。中身は align-items:center で
+     中央に揃うので、幅を変えても絵の位置はずれない */
   .tok {
     position: absolute;
-    width: 34px;
-    margin-left: -17px;
+    width: 44px;
+    margin-left: -22px;
     margin-top: -16px;
     display: flex;
     flex-direction: column;
@@ -1101,6 +1121,16 @@
 
   /* ───── fx ───── */
   #fx { position: fixed; inset: 0; pointer-events: none; z-index: 45; overflow: hidden; }
+  /* 攻撃の瞬間に振られる武器（fx.js weaponFx）。幅・高さは絵の実寸のまま使い、
+     倍率は transform の scale で掛ける（切り出しごとに縦横比が違うため） */
+  .wepfx {
+    position: absolute;
+    image-rendering: pixelated;
+    pointer-events: none;
+    z-index: 46;
+    transform-origin: 50% 100%;   /* 柄の握り＝絵の下端中央を支点に振る */
+    filter: drop-shadow(0 1px 2px #000000aa);
+  }
   .pcl { position: absolute; border-radius: 50%; pointer-events: none; }
   /* 絵文字🪙はOS(特にiPhone)によって銀色寄りに描画されるため、金色を保証するCSS描画コインに置換 */
   .flycoin {
@@ -1423,6 +1453,135 @@
   .dexrow.locked .dexbody b { letter-spacing: .06em; }
   #panel h2 { font-size: 22px; font-weight: 900; margin-bottom: 6px; }
   #panel .ver { font-size: 11px; font-weight: 700; color: #8a6b3a; letter-spacing: .05em; }
+
+  /* ───── タイトル画面（img/ui/title_menue.png ＋ 板ボタン） ─────
+     ■ 1枚絵を画面いっぱいに出し、その上にボタンを載せる。絵(128×277)は縦長スマホの
+       縦横比に合わせて描かれている（実測の黒帯: 375×812=0px / 390×844=0px / 414×896=0px /
+       430×932=1px / 360×640=左右32px / 横持ち900×450=左右346px）。
+       端末差は黒帯で吸収する＝**絵は絶対に引き伸ばさない**。
+     ■ .title-stage は「絵とぴったり同じ矩形」。aspect-ratio + max-width/max-height で
+       contain と同じ収まり方を作っているので、中のボタンを % で置けば
+       どの端末でも絵との位置関係が変わらない（絵に描かれた扉の中にボタンが並ぶ）。
+     ■ タイトルだけ #panel の羊皮紙を外して全画面にする（.title-full）。
+       #panel の中身は25箇所から差し替えられるので、クラスの後始末は
+       ui.js の MutationObserver が自動でやる（各所に書くと必ず漏れる）。 */
+  #panel.title-full {
+    width: 100%; height: 100%;
+    max-width: none; max-height: none;
+    padding: 0; border: 0; border-radius: 0;
+    background: #000;                      /* 端末差を吸収する黒帯 */
+    box-shadow: none;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    animation: none;                       /* 全画面ではパネルの跳ねる登場は使わない */
+  }
+  #panel.title-full .title-stage {
+    position: relative;
+    aspect-ratio: 128 / 277;
+    height: 100%; width: auto;
+    max-width: 100%; max-height: 100%;     /* ここまでで contain 相当の収まりになる */
+    line-height: 0;
+  }
+  /* 絵の矩形。縦持ちではステージと同じ大きさ（＝重ねる土台）、横持ちでは左のカラムになる。
+     .title-ui と**兄弟**にしてあるのが肝で、これが無いとボタンが絵の枠の中に閉じ込められて
+     横持ちで隣へ出せない（実際に踏んだ: ボタン幅が絵の幅188pxに縛られた） */
+  #panel.title-full .title-frame { position: absolute; inset: 0; }
+  #panel.title-full .title-bg {
+    width: 100%; height: 100%; display: block;
+    image-rendering: pixelated;
+  }
+  /* ボタン類の入れ物。縦持ちは絵の上に重ねる（inset:0）、横持ちは絵の隣へ出す（下の lay-land） */
+  #panel.title-full .title-ui { position: absolute; inset: 0; }
+  /* 文字サイズは**ステージ幅**を基準にする。vh だけで書くと横持ちでステージが
+     画面の1/5幅まで縮んだときに 7px まで落ちて読めない（実測）。
+     ステージ幅 = min(100vw, 100vh×0.4621) なので、その1% = min(1vw, 0.4621vh) */
+  /* 設定は絵の右上角へ小さく重ねる（絵の題字を隠さない位置） */
+  #panel.title-full .title-gear {
+    position: absolute; top: 1.2%; right: 2.5%;
+    background: #00000066; border: 1px solid #ffffff33; border-radius: 999px;
+    width: 9%; aspect-ratio: 1;
+    font-size: clamp(13px, min(4.6vw, 2.13vh), 19px); line-height: 1;
+    color: #f7e8ca; cursor: pointer; padding: 0;
+    backdrop-filter: blur(2px);
+  }
+  #panel.title-full .title-ver {
+    position: absolute; right: 3%; bottom: .8%;
+    font-size: clamp(8px, min(2.5vw, 1.16vh), 10px); font-weight: 700; letter-spacing: .04em;
+    color: #e8d3a4; text-shadow: 0 1px 2px #000, 0 0 4px #000;
+    line-height: 1.2;
+  }
+  /* ボタンの帯: 絵の「扉」の部分（縦 43%〜）に上から並べる。
+     幅・すき間も % なので、黒帯が出る端末でも絵に対する見え方は同じ。
+     ⚠️ 板の間隔に `gap: n%` を使ってはいけない。縦方向の % gap は
+       flexコンテナの**高さ**基準だが、ここは高さが中身依存＝不定なので 0 に解決される
+       （実測で隙間0px＝板がぴったり密着していた）。
+       % マージンは常に「包む要素の幅」基準なので必ず効く → margin-bottom で開ける。 */
+  #panel.title-full .start-actions {
+    position: absolute; left: 50%; top: 43%;
+    transform: translateX(-50%);
+    width: 50%;
+    display: flex; flex-direction: column;
+    line-height: 1.2;
+    /* 板が小さくなったぶん、載せる文字もステージ幅基準で縮める（無地板の「続きから」用） */
+    font-size: clamp(9px, min(3.05vw, 1.41vh), 13px);
+  }
+  #panel.title-full .start-actions .mplate {
+    width: 100%; margin: 0 0 6.5%;
+    font-size: inherit;
+  }
+  #panel.title-full .start-actions .mplate:last-child { margin-bottom: 0; }
+  /* 細かい導線は絵の最下部（石段）へ。読めるように薄い黒の帯を敷く */
+  #panel.title-full .title-links {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 1.4% 4% 1.8%;
+    background: linear-gradient(180deg, #0000, #000000b3 45%);
+    line-height: 1.25;
+  }
+  #panel.title-full .title-links .title-link {
+    display: inline-block; width: auto;
+    margin: 0 3px; padding: 3px 2px;
+    font-size: clamp(10px, min(3.4vw, 1.57vh), 13px);
+    color: #f0dcae; text-decoration-color: #f0dcae66;
+    text-shadow: 0 1px 2px #000;
+  }
+
+  /* ■ メニューの板。原画は幅128pxで高さが 33〜36px と1枚ずつ違うので、
+       aspect-ratio を板ごとに当てて縦横比を保つ（一律だと文字が伸びる）。
+     ■ background の一括指定は background-image を消すので、**個別の板のルールを後に置く**
+       （募兵カードの枠絵で踏んだのと同じ罠）。
+     ■ url() は style.css からの相対で書く。CSS変数に入れると Chrome が
+       var() を使った側を基準に解決して 404 になる（枠絵で踏んだ罠）。 */
+  #panel .mplate {
+    display: block;
+    width: min(100%, 192px);
+    margin: 0 auto 7px;
+    border: 0; padding: 0;
+    background: no-repeat center / 100% 100%;
+    image-rendering: pixelated;
+    cursor: pointer;
+    filter: drop-shadow(0 2px 0 #00000055);
+    transition: transform .1s, filter .1s;
+    /* 無地板(other)に載せる文字。焼き込み済みの板では中身が空なので効かない */
+    font-family: inherit; font-weight: 900; font-size: 12.5px; color: #f7e8ca;
+    text-shadow: 0 1px 0 #000, 0 0 4px #000000aa;
+    line-height: 1.2;
+  }
+  #panel .mplate:active { transform: translateY(2px); filter: none; }
+  #panel .mplate:disabled { filter: grayscale(.7); opacity: .5; pointer-events: none; }
+  #panel .mplate[data-p="nomal"]     { aspect-ratio: 128/34; background-image: url('../img/ui/bottan/botan_nomal.png'); }
+  #panel .mplate[data-p="endless"]   { aspect-ratio: 128/36; background-image: url('../img/ui/bottan/botan_endless.png'); }
+  #panel .mplate[data-p="tyutorial"] { aspect-ratio: 128/35; background-image: url('../img/ui/bottan/botan_tyutorial.png'); }
+  #panel .mplate[data-p="ranking"]   { aspect-ratio: 128/36; background-image: url('../img/ui/bottan/botan_ranking.png'); }
+  #panel .mplate[data-p="other"]     { aspect-ratio: 128/33; background-image: url('../img/ui/bottan/botan_other.png'); }
+  #panel .start-note { font-size: 10.5px; margin: 8px 0 0; color: #6b4f23; line-height: 1.5; }
+  /* 細かい導線は従来どおりのテキストリンク（板にすると縦に伸びすぎる） */
+  #panel .title-link {
+    display: block; width: 100%;
+    background: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 11px; font-weight: 700;
+    color: #8a6b3a; text-decoration: underline;
+    margin-top: 5px; padding: 2px 0;
+  }
   #panel p { font-size: 13px; line-height: 1.7; margin-bottom: 13px; white-space: pre-line; }
   #panel .btn { width: 100%; background: linear-gradient(180deg, var(--gold), var(--gold-deep)); color: #3b2800; }
   #panel .feastChoices { display: flex; gap: 10px; margin: 2px 0 4px; }
@@ -1678,9 +1837,16 @@
   /* ── B方式: 全身立ち絵ユニット（img: を持つと hasimg が付く）──
      円メダルを外し、足を接地させて地形に立たせる。陣営（味方/敵）は
      メダル復活の代わりに「足元の影を薄く色づけ」して識別する。 */
-  .tok.hasimg { margin-top: -41px; }                 /* 立ち絵を上へ伸ばし、足元を従来の接地点に合わせる（サイズUPに追従） */
+  /* ■ 立ち絵のサイズと接地点の関係（変えるときは必ずこの式を守る）
+       .tok は top=マス中心・margin-top=mt で置かれ、箱の高さは .tport の height だけ
+       （HPバーは position:absolute で flow から外してある）。よって
+           絵の下端（足元） = マス中心 + mt + height
+       これを **マス中心 + 9px** に保つのが接地の約束＝ mt = 9 - height。
+       クラシック(絵文字)も 25px の円に mt:-16px で同じ +9 に揃っている。
+       ここを崩すと駒が地面から浮く／埋まるので、height を変えたら mt も必ず直すこと。 */
+  .tok.hasimg { margin-top: -55px; }                 /* = 9 - 64（下の height と対） */
   .tok.hasimg .tport {
-    width: 46px; height: 50px;                        /* 盤面のユニットを大きく表示（約1.4倍・足元基準） */
+    width: 58px; height: 64px;                        /* 通常ユニットも魔王級の大きさで見せる（足元基準） */
     background: none; border: none; box-shadow: none; border-radius: 0;
     align-items: flex-end;                            /* 足を下辺に接地 */
     overflow: visible;
@@ -1692,14 +1858,15 @@
     object-position: bottom center;                   /* 足元基準で拡大縮小 */
     filter: drop-shadow(0 1px 0 #00000066);           /* 地際を軽く締める */
   }
-  .tok.hasimg.boss { margin-top: -54px; }
-  .tok.hasimg.boss .tport { width: 58px; height: 64px; }   /* ボス（魔王）は一回り大きく */
+  /* 通常ユニットを魔王級まで上げたので、ボスはさらに一段大きくして格を保つ（mt = 9 - 76） */
+  .tok.hasimg.boss { margin-top: -67px; }
+  .tok.hasimg.boss .tport { width: 68px; height: 76px; }   /* ボス（魔王）は一回り大きく */
   /* 陣営識別: 足元の影を薄く染める（円メダルは復活させない） */
-  .tok.hasimg .tsh { bottom: 0; width: 31px; height: 9px; margin-left: -15.5px; }  /* 立ち絵の足元にぴたりと影を置く */
+  .tok.hasimg .tsh { bottom: 0; width: 39px; height: 11px; margin-left: -19.5px; }  /* 立ち絵の足元にぴたりと影を置く */
   /* 大きい駒ほど影も大きい＝重さの手がかり（.tok.hasimg .tsh が上書きしてしまうので個別に書く） */
-  .tok.hasimg.s3 .tsh { width: 35px; margin-left: -17.5px; height: 10px; }
-  .tok.hasimg.s4 .tsh { width: 38px; margin-left: -19px; height: 11px; }
-  .tok.hasimg.boss .tsh { width: 44px; margin-left: -22px; height: 12px; }
+  .tok.hasimg.s3 .tsh { width: 44px; margin-left: -22px; height: 12px; }
+  .tok.hasimg.s4 .tsh { width: 48px; margin-left: -24px; height: 13px; }
+  .tok.hasimg.boss .tsh { width: 53px; margin-left: -26.5px; height: 14px; }
   /* 陣営の染め分けは色変数だけ差し替える。background を上書きすると二層構造ごと消える */
   .tok.hasimg.foe .tsh { --shc: 176, 62, 42; }
   #board.arena .tok.hasimg:not(.foe) .tsh { --shc: 46, 100, 158; }
@@ -1740,15 +1907,15 @@
   .tok.hasimg.s3::before,
   .tok.hasimg.s4::before {
     top: auto; bottom: -2px;
-    width: 34px; height: 13px; margin-left: -17px;
+    width: 44px; height: 17px; margin-left: -22px;
     animation: ringpulse 1.8s ease-in-out infinite;
   }
   .tok.hasimg.s4::after {
     top: auto; bottom: -5px;
-    width: 44px; height: 17px; margin-left: -22px;
+    width: 56px; height: 22px; margin-left: -28px;
     animation: ringpulse 2.6s ease-in-out infinite;
   }
-  .tok.hasimg.boss.s3::before, .tok.hasimg.boss.s4::before { width: 44px; margin-left: -22px; }
+  .tok.hasimg.boss.s3::before, .tok.hasimg.boss.s4::before { width: 56px; margin-left: -28px; }
   @keyframes ringpulse { 0%, 100% { opacity: .3; } 50% { opacity: .85; } }
 
   /* ── 対人戦(闘技場)の敵味方識別 ──
@@ -1926,12 +2093,48 @@
   html.lay-land .help-scroll h3 { break-after: avoid; }   /* 見出しだけ段の底に取り残さない */
   /* パネルが広くなっても押しやすい幅に保つ（760px幅のボタンは押しにくい） */
   html.lay-land #panel .btn { max-width: 420px; margin-left: auto; margin-right: auto; }
-  /* タイトル: 左に説明、右に操作ボタンを並べる（縦持ちでは .start-cols は素のブロック＝従来どおり） */
+  /* タイトル: 左に1枚絵、右に操作ボタンを並べる（縦持ちでは .start-cols は素のブロック＝
+     絵の下にボタンが積まれる）。横向きは高さが足りないので、絵は縦幅いっぱいまで使う */
   html.lay-land .start-cols {
     display: grid; grid-template-columns: 1.05fr .95fr;
     gap: 16px; align-items: start; text-align: left;
   }
   html.lay-land .start-cols .help-grid { margin-bottom: 0; }
+  /* タイトル（横持ち）: 絵の上にボタンを載せる構成が使えない。横画面では絵が
+     画面の1/5幅しか取れず、実測 900×450 で ステージ199px幅・板30px高・リンク7px になり
+     押せない・読めないため。**絵は原寸比のまま左に置き、ボタンは絵の隣（右）へ出す**。
+     絵を引き伸ばさない方針は縦持ちと同じで、余りは黒で埋まる。 */
+  html.lay-land #panel.title-full { padding: 2.5vh 4vw; }
+  /* ステージ自体を横並びの器にし、絵(.title-frame)とボタン(.title-ui)を左右に置く */
+  html.lay-land #panel.title-full .title-stage {
+    aspect-ratio: auto; width: 100%; height: 100%; max-width: none;
+    display: flex; flex-direction: row; align-items: center; gap: 4vw;
+  }
+  html.lay-land #panel.title-full .title-frame {
+    position: static; inset: auto;
+    height: 100%; aspect-ratio: 128 / 277; flex: 0 0 auto;   /* 絵は原寸比のまま */
+  }
+  /* 絵の隣へ出す＝重ねるための絶対配置を解除して素の縦積みに戻す */
+  html.lay-land #panel.title-full .title-ui {
+    position: static; inset: auto;
+    flex: 1 1 auto; min-width: 0;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 1.5vh;
+  }
+  /* max-width 200px は「板6枚＋隙間5つ＋リンク」が 900×450 の縦に収まる実測上限
+     （300px だと板77px高×6＝462pxで溢れ、210px＋隙間4%でも2pxだけ溢れた） */
+  html.lay-land #panel.title-full .start-actions,
+  html.lay-land #panel.title-full .title-links {
+    position: static; inset: auto; transform: none;
+    width: 100%; max-width: 200px; padding: 0; background: none;
+  }
+  /* 横持ちは縦の余りが少ないので隙間を詰める（縦持ちの 6.5% だと 18.6px になり
+     板6枚＋リンクが 450px の縦からあふれた）。4% ＝ 約8px */
+  html.lay-land #panel.title-full .start-actions .mplate { margin-bottom: 4%; }
+  html.lay-land #panel.title-full .start-actions .mplate:last-child { margin-bottom: 0; }
+  html.lay-land #panel.title-full .title-links { text-align: center; }
+  html.lay-land #panel.title-full .title-gear { position: absolute; top: 2vh; right: 3vw; width: auto; padding: 5px 9px; aspect-ratio: auto; }
+  html.lay-land #panel.title-full .title-ver { position: absolute; right: 3vw; bottom: 1.5vh; }
   html.lay-land .start-actions { text-align: center; }
 
   /* チュートリアルの吹き出しが右カラム（🎲や⚔️ボタン）を覆わないように */
