@@ -159,6 +159,9 @@
   }
   /* 部隊枠あふれ（恩返しの駆け込み合流）: 枠に収めるまで出撃不可の警告色 */
   #teamCount.over { color: #ffc9c0; background: #6a1e14cc; }
+  /* 陣形のコンボ数（試作）。駒を動かすたびに動く数字なので、周りより一段強く出す */
+  #formCombo { color: #ffd66e; font-size: 11px; background: #2a1a0acc; }
+  #formCombo[hidden] { display: none; }
   /* 盤上の噂書き: 敵陣の上に漂う一行フレーバー（募兵フェイズのみ） */
   #rumorLine {
     position: absolute;
@@ -1338,6 +1341,34 @@
   #predictHeads polygon.pA { fill: #ffd66eee; }
   #predictHeads polygon.pE { fill: #ff6b70dd; }
   #predictHeads polygon.pC { fill: #7fd8ffee; }
+  /* 陣形の線（試作）。色は fx.js が stroke/fill に直接入れる（従士=水色・双璧=金・縦陣=系統色）。
+     ── なぜ盤の中ではなく画面座標なのか（実際に踏んだ） ──
+     #board は preserve-3d で、駒は counter-transform で立っているビルボード。
+     平らな層を盤の中に入れると、**z-index をいくら上げても立っている駒の後ろに隠れる**
+     （3D文脈では奥行きが z-index より優先される）。translateZ で持ち上げると今度はパースで
+     視差が出て線が駒からズレる。画面座標で「見えている足元」同士を結ぶのが確実で位置も合う。
+     ※ 位置は fx.js の formLineFx が getBoundingClientRect から毎回計算して入れる */
+  #formLayer {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 44;                 /* #fx(45) のすぐ下・盤より上 */
+    filter: drop-shadow(0 1px 2px #000c);
+  }
+  #formLayer line {
+    stroke-width: 2.5px;
+    stroke-linecap: round;
+    stroke-dasharray: 5 4;       /* 駒の上を通るので、塗り潰さず「糸」に見せる */
+    opacity: .85;
+    animation: formFlow 1.6s linear infinite;
+  }
+  @keyframes formFlow { to { stroke-dashoffset: -18; } }
+  #formLayer circle { opacity: .95; }
+  /* 陣形名のポップ（#fx の中＝画面座標） */
+  .formname {
+    position: absolute; z-index: 47; pointer-events: none;
+    font-weight: 800; font-size: 15px; white-space: nowrap;
+    text-shadow: 0 2px 3px #000, 0 0 8px #0008;
+  }
   /* 神話魔法使い: 燃える地面 */
   /* シナジー発動の光輪。駒(.tok)の子として絵の「後ろ」(z-index:-1)に出るので視認性を落とさない。
      左右にずらした2つの放射グラデーションを重ねることで、2系統持ちの駒を2色に染め分ける

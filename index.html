@@ -70,7 +70,7 @@ try {
   </div>
 
   <div id="boardWrap">
-    <div id="boardLabel"><span id="enemyLabel">敵陣 — 次の対戦相手</span><span id="teamCount">自陣（下4行に配置）</span></div>
+    <div id="boardLabel"><span id="enemyLabel">敵陣 — 次の対戦相手</span><span id="formCombo" hidden></span><span id="teamCount">自陣（下4行に配置）</span></div>
     <div id="warGauge"><div id="wgFill"></div><span id="wgAllyPct"></span><span id="wgFoePct"></span></div>
     <div id="rumorLine"></div>
     <!-- 盤の層。奥→手前の順に並べる（実際の前後は CSS の z-index が決める）。
@@ -122,12 +122,17 @@ try {
 </div>
 
 <div id="fx"></div>
+<!-- 陣形の線（試作）。**盤の中には置けない**: #board は preserve-3d で、駒はビルボード＝
+     立っているので、平らな層は z-index を上げても駒の後ろに隠れる（translateZ で持ち上げると
+     今度は視差でズレる）。画面座標で駒の足元同士を結ぶ方が確実で、位置も合う -->
+<svg id="formLayer"></svg>
 <div id="slam"><div id="slamText"></div></div>
 <div id="overlay"><div id="panel"></div></div>
 <div id="biomeBanner"></div>
 <div id="toast"></div>
 
 <!-- 読み込み順は依存関係どおり。最後の ui.js がイベント登録とゲーム起動を行う -->
+<!-- 陣形の検出。team.js の autoPlace から呼ぶので必ず前に置く -->
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
