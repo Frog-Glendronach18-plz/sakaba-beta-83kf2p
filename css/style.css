@@ -1366,9 +1366,11 @@
   /* 陣形名のポップ（#fx の中＝画面座標） */
   .formname {
     position: absolute; z-index: 47; pointer-events: none;
-    font-weight: 800; font-size: 15px; white-space: nowrap;
-    text-shadow: 0 2px 3px #000, 0 0 8px #0008;
+    font-weight: 800; font-size: 19px; white-space: nowrap;
+    /* 盤の絵の上に出るので、縁取りを厚くしないと読めない（地形も駒も色が濃い） */
+    text-shadow: 0 0 3px #000, 0 0 3px #000, 0 2px 4px #000, 0 0 12px #000a;
   }
+  .formname.big { font-size: 25px; }   /* 開戦の点呼: 読ませたいので一段大きく */
   /* 神話魔法使い: 燃える地面 */
   /* シナジー発動の光輪。駒(.tok)の子として絵の「後ろ」(z-index:-1)に出るので視認性を落とさない。
      左右にずらした2つの放射グラデーションを重ねることで、2系統持ちの駒を2色に染め分ける
