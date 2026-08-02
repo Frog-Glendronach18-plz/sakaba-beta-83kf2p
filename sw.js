@@ -3,7 +3,7 @@
    ファイルを更新して公開するときは CACHE_VERSION を上げること（古いキャッシュは自動削除される） */
 'use strict';
 
-const CACHE_VERSION = 'sakaba-v1.48.0';  // アプリ本体（コード変更で上げる）
+const CACHE_VERSION = 'sakaba-v1.49.0';  // アプリ本体（コード変更で上げる）
 const MEDIA_CACHE = 'sakaba-media-v2';   // BGM（音源を差し替えたときだけ上げる）
 const FONT_CACHE = 'sakaba-fonts-v1';
 
@@ -37,14 +37,16 @@ const UNIT_ART = [
   './img/units/e_gobl.png', './img/units/e_wolf.png', './img/units/e_arch.png', './img/units/e_scor.png',
   './img/units/e_spid.png', './img/units/e_dragon.png', './img/units/e_ogre.png', './img/units/e_darkmage.png',
   './img/units/e_maou.png', './img/units/e_bat.png',
-  // 隠しキャラ（盤面に立つ）: 勇者・味方魔王・精霊・守護精霊・シーフ(旧)・闘技場の幽霊
+  // 隠しキャラ（盤面に立つ）: 勇者・味方魔王・精霊・守護精霊・闘技場の幽霊
+  // ※ シーフ(thief)は引退ユニット。絵は img/units/old/ へ退避し、配布からも外した（絵文字🥷で出る）
   './img/units/hero.png', './img/units/allymaou.png', './img/units/spirit.png',
-  './img/units/gspirit.png', './img/units/thief.png', './img/units/ghost.png',
-  // 募兵カードにだけ出る面々: 珍客4種・疲れた実力者4系統
+  './img/units/gspirit.png', './img/units/ghost.png',
+  // 募兵カードにだけ出る面々: 珍客4種・疲れた実力者5系統
   // ワンコは絵柄3種（中身は同じ。わんこ喫茶では全種類が並ぶので3枚とも要る）
   './img/units/g_dog.png', './img/units/g_dog2.png', './img/units/g_dog3.png',
   './img/units/g_cat.png', './img/units/g_nurse.png', './img/units/g_akane.png',
-  './img/units/vis_war.png', './img/units/vis_tank.png', './img/units/vis_mage.png', './img/units/vis_merc.png',
+  './img/units/vis_war.png', './img/units/vis_tank.png', './img/units/vis_mage.png',
+  './img/units/vis_merc.png', './img/units/vis_pact.png',
   // 武器の切り出し絵（攻撃の瞬間だけ振られる）。data.js の WEAPON_ART と対で増やす
   './img/units/wepons/sword.png', './img/units/wepons/guard.png', './img/units/wepons/appr.png',
   './img/units/wepons/relic.png', './img/units/wepons/knight.png', './img/units/wepons/blade.png',
@@ -60,6 +62,7 @@ const UNIT_ART = [
   // ゲーム内アイコン（攻撃力・体力など）。CSS の .gi-* が参照する
   './img/ui/atk.png', './img/ui/hp.png', './img/ui/gold.png', './img/ui/cap.png',
   './img/ui/forge.png', './img/ui/star.png', './img/ui/pet.png', './img/ui/threat.png',
+  './img/ui/chest.png',
   // 募兵カードの枠絵（ティア別＋お助け・実力者）。render.js の CARD_FRAMES と対で増やす
   './img/units/frame/frame_T1_1.png', './img/units/frame/frame_T1_2.png',
   './img/units/frame/frame_T2_1.png', './img/units/frame/frame_T2_2.png',

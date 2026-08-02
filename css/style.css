@@ -634,8 +634,13 @@
     border-radius: 50%;
     background: radial-gradient(ellipse at center, #e8b33d55, transparent 70%);
   }
+  /* 中身は gi('chest') ＝ img/ui/chest.png（🔤絵文字モードでは🎁へ戻る）。
+     .gi のサイズは 1.05em なので、絵の大きさはここの font-size で決まる。
+     14px（絵文字だった頃の値）だとドット絵の宝箱が潰れて金具が読めないので 17px。
+     display:flex は .gi のベースライン分の余白を殺して接地位置をぶらさないため */
   .chest .cbody {
-    font-size: 14px; line-height: 1;
+    font-size: 17px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
     filter: drop-shadow(0 1px 2px #000);
     animation: chestbob 2.2s ease-in-out infinite;
   }
@@ -967,7 +972,8 @@
      ※ transform で更に寄せてはいけない。この絵は 96×96 のほぼ全面に描かれており
        （実測 bbox 幅 72〜96px）、拡大すると腕・武器・盾の左右が切れる。cover が上限。
      ※ object-position が top なのは頭頂を切らないため（絵の中身は y=0〜9 から始まる）。
-     ※ 来訪者(vis_*)のカードだけは丸いバッジ絵なので bust を付けない（下端が欠ける） */
+     ※ 来訪者(vis_*)も v1.49.0 で全身立ち絵になり、他と同じ胸像で映すようになった
+       （仮絵の丸バッジだった頃だけ bust を外していた） */
   .card .cport.bust .uimg {
     width: 100%; height: 100%;
     object-fit: cover;
@@ -1924,6 +1930,7 @@
   .gi-star   { background-image: url('../img/ui/star.png'); }
   .gi-pet    { background-image: url('../img/ui/pet.png'); }
   .gi-threat { background-image: url('../img/ui/threat.png'); }
+  .gi-chest  { background-image: url('../img/ui/chest.png'); }
   /* 絵文字モード: 画像を外して元の絵文字へ戻す */
   html.icon-classic .gi {
     background-image: none !important;
