@@ -636,10 +636,10 @@
   }
   /* 中身は gi('chest') ＝ img/ui/chest.png（🔤絵文字モードでは🎁へ戻る）。
      .gi のサイズは 1.05em なので、絵の大きさはここの font-size で決まる。
-     14px（絵文字だった頃の値）だとドット絵の宝箱が潰れて金具が読めないので 17px。
+     14px（絵文字だった頃の値）→腰くらいの高さにするため30px。
      display:flex は .gi のベースライン分の余白を殺して接地位置をぶらさないため */
   .chest .cbody {
-    font-size: 17px; line-height: 1;
+    font-size: 30px; line-height: 1;
     display: flex; align-items: center; justify-content: center;
     filter: drop-shadow(0 1px 2px #000);
     animation: chestbob 2.2s ease-in-out infinite;
@@ -1098,9 +1098,16 @@
     0%,100% { transform: translateY(0); filter: brightness(1); }
     55% { transform: translateY(1.6px); filter: brightness(.92); }
   }
-  .card.viscard .cport { background: radial-gradient(ellipse at 50% 25%, #9aa0ae, #565c68); filter: grayscale(.35); }
-  .card.viscard .cname { color: #e2e5ec; }
-  .card.viscard .btag { color: #9aa0ae; }
+  /* 肖像枠の地。仮絵（丸バッジ）の頃は暗いほうが雰囲気が出たが、全身立ち絵に変えたら
+     「暗い絵を暗い地に置く」形になって顔が沈んだ。地を上げ、灰色化も浅くする。
+     ※ 立ち絵は cover で枠を埋めるので、地が見えるのは絵の透明部分（肩の外・足元）だけ */
+  .card.viscard .cport { background: radial-gradient(ellipse at 50% 25%, #ccd1db, #8b93a3); filter: grayscale(.15); }
+  /* 文字色は「羊皮紙の地」に合わせる。
+     枠絵を入れた版で .card.framed.viscard が地を羊皮紙に戻したのに、ここだけ
+     暗色カード時代の白文字(#e2e5ec)が残っていて、明るい地に白＝ほぼ読めなかった */
+  .card.viscard .cname { color: #33384a; }
+  .card.viscard .btag { color: #5b6272; }
+  .card.viscard .cstats { color: #5b6272 !important; }   /* インラインの #8a93a6 を上書き（羊皮紙では薄すぎる） */
   .card.viscard .cost { background: #3b3f4a; color: #cfd4de; }
   #panel .visBtn {
     flex: 1; line-height: 1.4; white-space: normal; padding: 12px 6px; font-size: 13px; font-weight: 900;
@@ -1379,6 +1386,11 @@
     text-shadow: 0 0 3px #000, 0 0 3px #000, 0 2px 4px #000, 0 0 12px #000a;
   }
   .formname.big { font-size: 25px; }   /* 開戦の点呼: 読ませたいので一段大きく */
+  /* 点呼の締めの「Nコンボ！」。最後の陣形名が消えてから単独で出す（fx.js formTotalFx） */
+  .formname.big.total {
+    font-size: 36px; color: var(--gold);
+    text-shadow: 0 0 4px #000, 0 0 4px #000, 0 2px 6px #000, 0 0 22px #d4a94799;
+  }
   /* ヘルプのタブ（基本／陣形／図鑑）。盤の #tabBar とは別物（あちらは横向きレイアウト専用） */
   .htabs { display: flex; gap: 4px; margin: 2px 0 6px; }
   .htabs .htab {
@@ -1593,6 +1605,77 @@
   #panel.title-full .title-bg {
     width: 100%; height: 100%; display: block;
     image-rendering: pixelated;
+  }
+
+  /* ───── タイトルの灯り（ランタン3灯＋店内） ─────
+     絵は「全体を一段落とした base（title_menue.png）」＋「灯った一角だけの透過レイヤー
+     （title_lamp1〜3.png・128×277）」の重ね。レイヤーの opacity を上下させると、
+     その一角だけが明るくなったり base の暗さへ落ちたりする＝ランプが息をする。
+
+     重ね順が肝: base → 暗幕(.title-dim) → 灯り(.title-lamp) → 店内(.title-inglow)。
+     **暗幕を灯りより下に置くこと。** 上に置くと灯りまで一緒に沈んで、
+     「暗くすると光も消える」という逆の絵になる。この順なら
+     「ランプから離れた場所だけが暗くなり、灯りはそのまま光る」になる。
+
+     調整はすべて .title-stage の変数1か所で足りる（下の --title-dim / --lamp-lo / --lamp-hi）。 */
+  #panel.title-full .title-stage {
+    --title-dim: .5;    /* ランプから離れた場所の暗さ（0＝暗幕なし / 1＝真っ黒） */
+    --title-dim-r: 46%; /* この半径までは暗くしない（扉とランタンを含む範囲） */
+    --lamp-lo: .45;     /* 灯りが最も落ちたときの濃さ（0にすると消灯に見える） */
+    --lamp-hi: 1;       /* 最も強いときの濃さ */
+    --glow-lo: .06;     /* 店内のゆらぎ（弱） */
+    --glow-hi: .2;      /* 　　〃　　（強）。上げすぎると扉の中が「オレンジの板」になる */
+  }
+  #panel.title-full .title-dim {
+    position: absolute; inset: 0; pointer-events: none;
+    /* 中央（扉と3灯のある帯）を残して、外へ向かうほど濃くする楕円の暗幕。
+       石畳の手前と空の隅が落ちて、視線が入口へ集まる */
+    background:
+      radial-gradient(ellipse 78% 52% at 50% 42%,
+        #05030b00 0%,
+        #05030b00 var(--title-dim-r),
+        rgba(5, 3, 11, calc(var(--title-dim) * .55)) 74%,
+        rgba(5, 3, 11, var(--title-dim)) 100%);
+  }
+  #panel.title-full .title-lamp {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    image-rendering: pixelated;
+    pointer-events: none;
+    opacity: var(--lamp-hi);
+    animation: lampflicker 4s ease-in-out infinite;
+    /* 周期と位相は ui.js の titleLampFlicker が1灯ずつ散らす（同期して見せない） */
+  }
+  /* 店内の灯り。奥行きのある扉の中だけを暖色でゆらす（専用の絵は要らない） */
+  #panel.title-full .title-inglow {
+    position: absolute; inset: 0; pointer-events: none;
+    opacity: var(--glow-hi);
+    background: radial-gradient(ellipse 26% 13% at 50% 57%, #ffb85e 0%, #ff8f3a55 46%, #ff8f3a00 100%);
+    animation: inglowflicker 5s ease-in-out infinite;
+  }
+  /* 揺れ幅は小さく、間隔は不揃いに。等間隔の sin 波にすると「電飾」に見える。
+     ガクッと落ちる一瞬（62%）を混ぜると炎らしくなる */
+  @keyframes lampflicker {
+    0%, 100% { opacity: var(--lamp-hi); }
+    18%      { opacity: calc(var(--lamp-lo) + (var(--lamp-hi) - var(--lamp-lo)) * .74); }
+    34%      { opacity: var(--lamp-hi); }
+    52%      { opacity: calc(var(--lamp-lo) + (var(--lamp-hi) - var(--lamp-lo)) * .55); }
+    62%      { opacity: var(--lamp-lo); }
+    70%      { opacity: calc(var(--lamp-lo) + (var(--lamp-hi) - var(--lamp-lo)) * .88); }
+    86%      { opacity: calc(var(--lamp-lo) + (var(--lamp-hi) - var(--lamp-lo)) * .62); }
+  }
+  @keyframes inglowflicker {
+    0%, 100% { opacity: var(--glow-hi); }
+    26%      { opacity: var(--glow-lo); }
+    44%      { opacity: calc(var(--glow-lo) + (var(--glow-hi) - var(--glow-lo)) * .8); }
+    58%      { opacity: calc(var(--glow-lo) + (var(--glow-hi) - var(--glow-lo)) * .3); }
+    78%      { opacity: var(--glow-hi); }
+  }
+  /* 動きを減らす設定では止める（プロジェクト共通の約束）。
+     消すのではなく「いちばん明るい状態で静止」＝絵として成立させる */
+  @media (prefers-reduced-motion: reduce) {
+    #panel.title-full .title-lamp,
+    #panel.title-full .title-inglow { animation: none; }
   }
   /* ボタン類の入れ物。縦持ちは絵の上に重ねる（inset:0）、横持ちは絵の隣へ出す（下の lay-land） */
   #panel.title-full .title-ui { position: absolute; inset: 0; }
@@ -1901,6 +1984,15 @@
     -webkit-user-drag: none;
   }
   .hu-ic .uimg { width: 84px; height: 84px; }   /* 図鑑: 立ち絵をしっかり見せる（本文は残り幅で折り返す） */
+  /* お助けキャラ（図鑑の末尾）。通常ユニットと同じ .hu 行だが、主役ではないので一回り小さく。
+     絵柄が複数ある面々（ワンコ3種・疲れた実力者5系統）は全員を**2段**に組む。
+     列数は JS が --n（＝ceil(枚数/2)）で渡す＝枚数が増えても常に2段のまま収まる。
+     幅は通常ユニットと同じ84pxに固定しているので、行頭の位置が上下で揃う */
+  .hu.helper .hu-ic { font-size: 40px; }
+  .hu.helper .hu-ic .uimg { width: 66px; height: 66px; margin: 0 auto; }
+  .hu.helper .hu-ic.multi { display: grid; grid-template-columns: repeat(var(--n, 2), 1fr); gap: 2px; }
+  .hu.helper .hu-ic.multi .uimg { width: 100%; height: auto; aspect-ratio: 1; }
+  .hu.helper.locked { opacity: .55; }
   .uimg-mx { width: 30px; height: 30px; display: inline-block; vertical-align: middle; }  /* シナジー×Tier早見表 */
   .rcu-ic .uimg { width: 46px; height: 46px; }   /* リザルトカード: 最終編成を見せ場にする */
   .uimg-s { width: 15px; height: 15px; display: inline-block; vertical-align: -3px; }  /* 情報バー等の行内 */

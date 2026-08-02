@@ -3,7 +3,7 @@
    ファイルを更新して公開するときは CACHE_VERSION を上げること（古いキャッシュは自動削除される） */
 'use strict';
 
-const CACHE_VERSION = 'sakaba-v1.49.0';  // アプリ本体（コード変更で上げる）
+const CACHE_VERSION = 'sakaba-v1.51.0';  // アプリ本体（コード変更で上げる）
 const MEDIA_CACHE = 'sakaba-media-v2';   // BGM（音源を差し替えたときだけ上げる）
 const FONT_CACHE = 'sakaba-fonts-v1';
 
@@ -55,7 +55,9 @@ const UNIT_ART = [
   './img/units/wepons/allymaou.png', './img/units/wepons/spirit.png', './img/units/wepons/ghost.png',
   './img/units/wepons/e_maou.png',
   // タイトル画面の絵とメニューのボタン（ui.js の showStart / MENU_PLATE が参照）
+  // title_lamp1〜3 は「灯った一角だけ」の透過レイヤー（明滅演出。style.css「タイトルの灯り」）
   './img/ui/title_menue.png',
+  './img/ui/title_lamp1.png', './img/ui/title_lamp2.png', './img/ui/title_lamp3.png',
   './img/ui/bottan/botan_nomal.png', './img/ui/bottan/botan_endless.png',
   './img/ui/bottan/botan_tyutorial.png', './img/ui/bottan/botan_ranking.png',
   './img/ui/bottan/botan_other.png',
