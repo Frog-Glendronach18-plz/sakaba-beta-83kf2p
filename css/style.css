@@ -1391,6 +1391,12 @@
     font-size: 36px; color: var(--gold);
     text-shadow: 0 0 4px #000, 0 0 4px #000, 0 2px 6px #000, 0 0 22px #d4a94799;
   }
+  /* 相手軍団ぶんの締め（闘技場）。**自分の結果と取り違えさせない**のが仕事なので、
+     金ではなく敵色・一回り小さく・文言も「相手 N コンボ」に変えてある */
+  .formname.big.total.foe {
+    font-size: 29px; color: #ff9b7a;
+    text-shadow: 0 0 4px #000, 0 0 4px #000, 0 2px 6px #000, 0 0 20px #ff6a3d80;
+  }
   /* ヘルプのタブ（基本／陣形／図鑑）。盤の #tabBar とは別物（あちらは横向きレイアウト専用） */
   .htabs { display: flex; gap: 4px; margin: 2px 0 6px; }
   .htabs .htab {
