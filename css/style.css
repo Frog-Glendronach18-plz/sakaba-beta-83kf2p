@@ -1437,6 +1437,14 @@
     color: #ffe9a8; text-shadow: 0 1px 2px #000, 0 0 3px #000;
   }
   .fex-cap { font-size: 11px; line-height: 1.45; color: #4a3a22; margin: 0 0 10px 2px; }
+  /* ヘルプ⚑陣形タブの一覧行（陣形名 → 条件）。13種あるので、図を出さないものはこの1行形式でさばく。
+     名前の欄は固定幅にせず max-content で詰める（「〇ギルド / 〇大ギルド」のような長い名前が折れないように） */
+  .frow {
+    display: grid; grid-template-columns: minmax(84px, max-content) 1fr; gap: 4px 8px;
+    font-size: 11px; line-height: 1.45; color: #4a3a22;
+    padding: 3px 4px; border-bottom: 1px solid #00000014;
+  }
+  .frow b { color: #6b4f23; }
   /* 神話魔法使い: 燃える地面 */
   /* シナジー発動の光輪。駒(.tok)の子として絵の「後ろ」(z-index:-1)に出るので視認性を落とさない。
      左右にずらした2つの放射グラデーションを重ねることで、2系統持ちの駒を2色に染め分ける
