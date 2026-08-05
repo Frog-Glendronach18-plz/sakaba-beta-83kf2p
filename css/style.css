@@ -1393,16 +1393,40 @@
     animation: formFlow 1.6s steps(16) infinite;
   }
   @keyframes formFlow { to { stroke-dashoffset: -18; } }
-  /* ── 盤が止まっている間は流れも止める（発熱対策） ──
+  /* ═══ 盤が止まっている間は静かになる（発熱対策 ＋ 見た目） ═══
      上の2つは steps() で 10fps まで落としてあるが、それでも「考えている数十秒」の
-     あいだ回り続ける。盤が動いていないなら流れる必要もないので、最後に盤が
-     変わってから一定時間で休ませる（render.js の flowWake が html.calm を付ける）。
-     animation: none ではなく play-state: paused にすること。none だと
-     stroke-dashoffset が 0 に戻り、破線が一瞬ガクッと飛ぶ */
-  html.calm #predictLayer line,
-  html.calm #formLayer line { animation-play-state: paused; }
+     あいだ回り続ける。盤が動いていないなら流れる必要はない。
+
+     ただし**いきなり止めてはいけない**（最初そうして「不自然」と却下された）。
+     流れていた線がピタリと固まると、壊れたように見える。2段階にする:
+
+       html.hush  … 静かなほうへフェード（transition。流れたまま薄くなる）
+       html.still … フェードが終わってから流れを止める（ここで再ペイントがゼロになる）
+
+     時間は render.js の FLOW_HOLD_MS / FLOW_FADE_MS。**下の transition と必ず揃えること。**
+     流れの止め方は animation: none ではなく play-state: paused。none だと
+     stroke-dashoffset が 0 に戻り、破線が一瞬ガクッと飛ぶ。
+
+     消え方を左右で変えてある:
+       予測ライン … 薄くするだけ。**誰が誰を狙うかは「情報」**なので消してはいけない
+       陣形の線   … 完全に消す。成立数は ⚑ コンボ表示が受け持つので、盤の上は空ける
+
+     ※ 速度は出入りで変える。**戻るときは速く**（駒を動かした手応えなので待たされたくない）、
+       **静まるときはゆっくり**（消えたことに気づかせない）。
+       transition は「移った先の状態」の指定が使われるので、
+       .hush 側に遅いのを、素の側に速いのを書けばそのとおりに効く */
+  #predictLayer line, #predictHeads polygon,
+  #formLayer line, #formLayer circle { transition: opacity .22s ease-out; }
+  html.hush #predictLayer line,
+  html.hush #predictHeads polygon { opacity: .42; transition: opacity 2s ease; }
+  html.hush #formLayer line,
+  html.hush #formLayer circle { opacity: 0; transition: opacity 2s ease; }
+  html.still #predictLayer line,
+  html.still #formLayer line { animation-play-state: paused; }
   @media (prefers-reduced-motion: reduce) {
     #predictLayer line, #formLayer line { animation: none; }
+    #predictLayer line, #predictHeads polygon,
+    #formLayer line, #formLayer circle { transition: none; }
   }
   #formLayer circle { opacity: .95; }
   /* 陣形名のポップ（#fx の中＝画面座標） */
