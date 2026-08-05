@@ -775,6 +775,66 @@
   #shopArea.battling #shopCards { visibility: hidden; }
   #shopArea.battling #battleLog { display: flex; }
 
+  /* ───── 開戦の点呼のコンボ枠 ─────
+     募兵カード／実況ログとまったく同じ枠に重ねる（#battleLog と同じ inset:0 の絶対配置）。
+     高さを持たないので、点呼中も #shopArea の高さは1pxも動かない＝盤が跳ねない。
+     点呼が終わったら外す＝そこから先はこれまでどおりの実況ログが見える。 */
+  #comboPane {
+    display: none;
+    position: absolute; inset: 0;
+    grid-template-columns: 30% 1fr;   /* 左=数とバフ（1/3弱）／右=成立した陣形 */
+    gap: 4px;
+    padding: 2px 3px;
+    overflow: hidden;
+  }
+  #shopArea.combo #comboPane { display: grid; }
+  /* 点呼中は実況ログを伏せる。display を切ると開戦時の1行目が積まれた状態が崩れるので visibility で */
+  #shopArea.combo #battleLog { visibility: hidden; }
+
+  #cpLeft {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px;
+    border-right: 1px solid #ffffff22;
+    padding-right: 4px;
+  }
+  #cpLeft .cpN { display: flex; flex-direction: column; align-items: center; line-height: 1; }
+  #cpLeft .cpN b {
+    font-size: 30px; font-weight: 900; color: var(--gold);
+    text-shadow: 0 0 8px #e8b33d66, 0 2px 2px #000;
+    font-variant-numeric: tabular-nums;   /* 数が増えても幅が動かない＝左右にガタつかない */
+  }
+  #cpLeft .cpN span { font-size: 9px; font-weight: 700; color: var(--parchment-dim); letter-spacing: .08em; }
+  #cpLeft .cpBuff {
+    font-size: 11px; font-weight: 800; color: var(--parchment);
+    text-align: center; line-height: 1.35; white-space: nowrap;
+  }
+  #cpLeft .cpBuff i { font-style: normal; opacity: .55; font-size: 9px; display: block; }
+  /* 数が増えた瞬間だけ跳ねる。transform なので合成のみ（README「描画コストの原則」） */
+  #cpLeft .cpN b.pop { animation: cpPop .34s cubic-bezier(.3,.9,.35,1.3); }
+  @keyframes cpPop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+  /* 右列: 成立した陣形が上から積まれる。増えたら下端に寄せて最新が必ず見える */
+  #cpList {
+    display: flex; flex-direction: column; justify-content: flex-end;
+    gap: 1px; overflow: hidden;
+  }
+  #cpList .cpItem {
+    /* 縮ませない。flex の既定(shrink:1)だと本数が増えたとき行が潰れて字が切れる。
+       固定しておけば古いものから上へ押し出され、最新が必ず下端に見える（実況ログと同じ流儀） */
+    flex: 0 0 auto;
+    font-size: 10.5px; font-weight: 700; color: var(--parchment);
+    line-height: 1.25;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    animation: cpIn .3s ease-out backwards;
+  }
+  #cpList .cpItem::before { content: '⚑ '; opacity: .7; }
+  /* 相手軍団ぶん（闘技場）。自分の成果と取り違えないよう色と印を変える */
+  #cpList .cpItem.foe { color: #ff9aa0; opacity: .9; }
+  #cpList .cpItem.foe::before { content: '⚔ 相手 '; opacity: .8; }
+  @keyframes cpIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+  /* 本数が多いと溢れるので、溜まってきたら詰める（9本前後が現実の上限） */
+  #cpList.dense .cpItem { font-size: 9px; line-height: 1.15; }
+
   .blog-entry {
     text-align: center;
     line-height: 1.18;

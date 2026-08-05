@@ -108,6 +108,14 @@ try {
       <div id="shopStage">
         <div id="shopCards"></div>
         <div id="battleLog"></div>
+        <!-- 開戦の点呼のあいだだけ実況ログの上にかぶせる。左=コンボ数と全体バフ／右=成立した陣形 -->
+        <div id="comboPane">
+          <div id="cpLeft">
+            <div class="cpN"><b id="cpNum">0</b><span>コンボ</span></div>
+            <div class="cpBuff" id="cpBuff"></div>
+          </div>
+          <div id="cpList"></div>
+        </div>
       </div>
       <div id="shopBtns">
         <button class="btn" id="rerollBtn">🎲 1G</button>
