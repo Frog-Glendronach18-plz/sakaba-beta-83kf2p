@@ -203,23 +203,27 @@
     transform-origin: 50% 100%;
     transform: rotateX(var(--tilt)) scaleY(var(--stretch));
     transform-style: preserve-3d;
+    /* ⚠️ マス目・敵陣の帯・配置ゾーンは **--cols / --rows / --foe-h から引く**こと。
+       ここに分数を直に書くと、盤の寸法を変えたときに駒だけ動いてマス目が取り残される
+       （実際に 7×9 → 7×8 でそうなった）。値は render.js の syncBoardMetrics が
+       data.js の COLS / ROWS / DEPLOY_ROW から流し込む。var() の第2引数は保険 */
     background:
       linear-gradient(180deg, #4a3527cc 0%, transparent 24%),
-      repeating-linear-gradient(0deg, transparent 0 calc(100%/9 - 1px), #00000026 calc(100%/9 - 1px) calc(100%/9)),
-      repeating-linear-gradient(90deg, transparent 0 calc(100%/7 - 1px), #00000026 calc(100%/7 - 1px) calc(100%/7)),
-      repeating-conic-gradient(var(--field-grass) 0% 25%, var(--field-grass2) 0% 50%) 0 0 / 28.58% 22.23%;
+      repeating-linear-gradient(0deg, transparent 0 calc(100%/var(--rows,8) - 1px), #00000026 calc(100%/var(--rows,8) - 1px) calc(100%/var(--rows,8))),
+      repeating-linear-gradient(90deg, transparent 0 calc(100%/var(--cols,7) - 1px), #00000026 calc(100%/var(--cols,7) - 1px) calc(100%/var(--cols,7))),
+      repeating-conic-gradient(var(--field-grass) 0% 25%, var(--field-grass2) 0% 50%) 0 0 / calc(200%/var(--cols,7)) calc(200%/var(--rows,8));
   }
   /* enemy territory tint + deploy zone */
   #board::before {
     content: '';
     position: absolute; left: 0; right: 0; top: 0;
-    height: 33.34%; /* 敵編成の3行 = 3/9 */
+    height: var(--foe-h, 50%); /* 敵陣 = r0..DEPLOY_ROW-1 */
     background: linear-gradient(180deg, #6e2c2433, transparent);
     pointer-events: none;
   }
   #zoneHint {
     position: absolute; left: 0; right: 0;
-    top: 55.56%; bottom: 0; /* row 5..8 = 5/9 */
+    top: var(--foe-h, 50%); bottom: 0; /* 自陣 = r DEPLOY_ROW..ROWS-1 */
     background: repeating-linear-gradient(45deg, #e8b33d22 0 8px, #e8b33d0d 8px 16px);
     border-top: 2px dashed #e8b33d88;
     border-radius: 0 0 10px 10px;
@@ -230,7 +234,7 @@
   #board.placing #zoneHint { opacity: 1; }
 
   /* ═════ 盤の層（奥→手前） ═════
-     #board の直下は元々すべてフラットな兄弟で、駒が行番号(1〜9)、地面の演出が 1、
+     #board の直下は元々すべてフラットな兄弟で、駒が行番号(1〜ROWS)、地面の演出が 1、
      薙ぎ払いが 4 …と z が混ざっていた。結果、薙ぎ払い(4)は自陣(下4行=z6〜9)の駒に
      必ず負けて隠れ、宝箱は z:auto(=0) でどの行でも全部の駒の後ろに回っていた。
      層に切り分けて「何が何の前か」を1箇所で決める。
@@ -342,15 +346,16 @@
       radial-gradient(ellipse 84% 76% at 50% 44%, #00000000 50%, #00000014 74%, #00000047 100%),
       linear-gradient(180deg, var(--haze, #cfe0ea3d) 0%, var(--haze0, #cfe0ea00) 40%);
   }
-  /* 地形画像モードのマス目オーバーレイ（7×9）。クラシックは盤の背景自体が格子なので使わない。
+  /* 地形画像モードのマス目オーバーレイ。クラシックは盤の背景自体が格子なので使わない。
      デフォルト(image)は配置・移動時(.placing)だけ、imagegridは常時うっすら表示。線は明色で
-     暗い地形(草原/岩地/溶岩)によく乗る。雪原では淡いが、明るい地形はマスが見やすいので許容 */
+     暗い地形(草原/岩地/溶岩)によく乗る。雪原では淡いが、明るい地形はマスが見やすいので許容。
+     ※ 行数・列数は #board と同じく --rows / --cols から引く（分数を直に書かないこと） */
   #fieldgrid {
     position: absolute; inset: 0; border-radius: 12px; pointer-events: none;
     opacity: 0; transition: opacity .2s ease;
     background:
-      repeating-linear-gradient(0deg, transparent 0 calc(100%/9 - 1px), #ffffff2e calc(100%/9 - 1px) calc(100%/9)),
-      repeating-linear-gradient(90deg, transparent 0 calc(100%/7 - 1px), #ffffff2e calc(100%/7 - 1px) calc(100%/7));
+      repeating-linear-gradient(0deg, transparent 0 calc(100%/var(--rows,8) - 1px), #ffffff2e calc(100%/var(--rows,8) - 1px) calc(100%/var(--rows,8))),
+      repeating-linear-gradient(90deg, transparent 0 calc(100%/var(--cols,7) - 1px), #ffffff2e calc(100%/var(--cols,7) - 1px) calc(100%/var(--cols,7)));
   }
   #board.fieldimg.placing #fieldgrid { opacity: 1; }
   #board.fieldgridalways #fieldgrid { opacity: 1; }
@@ -683,6 +688,9 @@
 
   /* ───── synergy ───── */
   #synergy { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; flex: 0 0 auto; }
+  /* シナジーの効果テキストは既定で隠す。**点灯の有無で行数が変わると盤の高さが揺れる**ため
+     （縦持ちでは体数と段階だけを出す）。横持ちの「✨シナジー」タブでだけ見せる */
+  .syn .syneff { display: none; }
   .syn {
     display: flex; align-items: center; gap: 3px;
     font-size: 9.5px; font-weight: 700;
@@ -775,27 +783,30 @@
   #shopArea.battling #shopCards { visibility: hidden; }
   #shopArea.battling #battleLog { display: flex; }
 
-  /* ───── 開戦の点呼のコンボ枠 ─────
-     募兵カード／実況ログとまったく同じ枠に重ねる（#battleLog と同じ inset:0 の絶対配置）。
-     高さを持たないので、点呼中も #shopArea の高さは1pxも動かない＝盤が跳ねない。
-     点呼が終わったら外す＝そこから先はこれまでどおりの実況ログが見える。 */
+  /* ───── コンボ枠（左のレール） ─────
+     **戦闘中ずっと出しっぱなし**にする（S.phase==='battle' のあいだ #shopArea.combo）。
+     点呼のときだけ出して消していたが、戦闘が始まった瞬間に「何コンボでいくら盛れているか」が
+     見えなくなるのは情報として惜しい。
+     右の 7割は実況ログがそのまま使う。点呼で読み上げる陣形名も**実況ログの1行として**積むので、
+     コンボの読み上げ → 戦況実況 が同じ列を流れて途切れない（別の箱に分けると切り替わりが出る）。
+     募兵カードの枠に重ねる絶対配置なので、点呼中も #shopArea の高さは1pxも動かない＝盤が跳ねない。 */
   #comboPane {
     display: none;
-    position: absolute; inset: 0;
-    grid-template-columns: 30% 1fr;   /* 左=数とバフ（1/3弱）／右=成立した陣形 */
-    gap: 4px;
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 30%;
     padding: 2px 3px;
+    border-right: 1px solid #ffffff22;
     overflow: hidden;
   }
-  #shopArea.combo #comboPane { display: grid; }
-  /* 点呼中は実況ログを伏せる。display を切ると開戦時の1行目が積まれた状態が崩れるので visibility で */
-  #shopArea.combo #battleLog { visibility: hidden; }
+  #shopArea.combo #comboPane { display: flex; }
+  /* 実況ログはレールのぶんだけ右へ寄る（幅を持つのはここだけ＝高さには一切触らない） */
+  #shopArea.combo #battleLog { left: 30%; padding-left: 7px; }
 
   #cpLeft {
+    flex: 1;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 3px;
-    border-right: 1px solid #ffffff22;
-    padding-right: 4px;
+    min-width: 0;
   }
   #cpLeft .cpN { display: flex; flex-direction: column; align-items: center; line-height: 1; }
   #cpLeft .cpN b {
@@ -804,36 +815,24 @@
     font-variant-numeric: tabular-nums;   /* 数が増えても幅が動かない＝左右にガタつかない */
   }
   #cpLeft .cpN span { font-size: 9px; font-weight: 700; color: var(--parchment-dim); letter-spacing: .08em; }
+  /* バフの内訳。陣形（割合）とシナジー（定額）を2段で出す。
+     どちらも「いま盤の駒に乗っている数字」で、ここが唯一まとまって見える場所 */
   #cpLeft .cpBuff {
     font-size: 11px; font-weight: 800; color: var(--parchment);
-    text-align: center; line-height: 1.35; white-space: nowrap;
+    text-align: center; line-height: 1.3; white-space: nowrap;
+    display: flex; flex-direction: column; gap: 3px;
   }
-  #cpLeft .cpBuff i { font-style: normal; opacity: .55; font-size: 9px; display: block; }
+  #cpLeft .cpBuff i { font-style: normal; opacity: .5; font-size: 8.5px; display: block; letter-spacing: .02em; }
+  #cpLeft .cpBuff .cpRow { display: block; }
+  #cpLeft .cpBuff .cpRow b { display: block; font-size: 12px; }
+  #cpLeft .cpBuff .cpRow.form b { color: var(--gold); }
+  #cpLeft .cpBuff .cpRow.syn  b { color: #b6e3ff; }
   /* 数が増えた瞬間だけ跳ねる。transform なので合成のみ（README「描画コストの原則」） */
   #cpLeft .cpN b.pop { animation: cpPop .34s cubic-bezier(.3,.9,.35,1.3); }
   @keyframes cpPop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
 
-  /* 右列: 成立した陣形が上から積まれる。増えたら下端に寄せて最新が必ず見える */
-  #cpList {
-    display: flex; flex-direction: column; justify-content: flex-end;
-    gap: 1px; overflow: hidden;
-  }
-  #cpList .cpItem {
-    /* 縮ませない。flex の既定(shrink:1)だと本数が増えたとき行が潰れて字が切れる。
-       固定しておけば古いものから上へ押し出され、最新が必ず下端に見える（実況ログと同じ流儀） */
-    flex: 0 0 auto;
-    font-size: 10.5px; font-weight: 700; color: var(--parchment);
-    line-height: 1.25;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    animation: cpIn .3s ease-out backwards;
-  }
-  #cpList .cpItem::before { content: '⚑ '; opacity: .7; }
-  /* 相手軍団ぶん（闘技場）。自分の成果と取り違えないよう色と印を変える */
-  #cpList .cpItem.foe { color: #ff9aa0; opacity: .9; }
-  #cpList .cpItem.foe::before { content: '⚔ 相手 '; opacity: .8; }
-  @keyframes cpIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
-  /* 本数が多いと溢れるので、溜まってきたら詰める（9本前後が現実の上限） */
-  #cpList.dense .cpItem { font-size: 9px; line-height: 1.15; }
+  /* 点呼で読み上げる陣形名は**実況ログの1行**として積む（専用の箱は持たない）。
+     そのまま戦況実況へ流れていくので、コンボ → 戦闘 の切り替わりが見えない */
 
   .blog-entry {
     text-align: center;
@@ -873,6 +872,10 @@
   .blog-entry.k-pet:nth-last-child(1)    { color: var(--pet); }
   .blog-entry.k-hit:nth-last-child(1)    { color: #ffe08a; }
   .blog-entry.k-ambush:nth-last-child(1) { color: #e79cf0; text-shadow: 0 0 10px #c04ad666, 0 1px 3px #000a; }
+  /* 点呼の陣形名。実況と同じ列を流れるが、自分の成果か相手のものかは色で分ける */
+  .blog-entry.k-form:nth-last-child(1)    { color: #ffd66e; text-shadow: 0 0 10px #e8b33d55, 0 1px 3px #000a; }
+  .blog-entry.k-formfoe                   { color: #ff9aa0; }
+  .blog-entry.k-formfoe:nth-last-child(1) { color: #ff9aa0; text-shadow: 0 0 10px #d4583a66, 0 1px 3px #000a; }
 
   /* ───── チュートリアル ───── */
   #tutBox {
@@ -1587,7 +1590,7 @@
      mask 未対応の環境では扇形になるだけで、演出として破綻はしない。
      置き場は #lyDecalHi（駒より手前の層）。地面に寝る .aoecell と役割が違い、
      こちらは「振り抜いた刃」なのでキャラの手前を通ってよい。
-     ※ かつては #board 直下の z-index:4 だった。駒の z は行番号(1〜9)なので、
+     ※ かつては #board 直下の z-index:4 だった。駒の z は行番号(1〜ROWS)なので、
        自陣（下4行＝6〜9）では必ず駒に負けて軌跡が丸ごと隠れていた */
   .sweepfx {
     position: absolute; pointer-events: none;
@@ -2394,6 +2397,7 @@
   html.lay-land #side[data-tab="syn"] #tierOdds,
   html.lay-land #side[data-tab="syn"] #shopStage { display: none; }
   html.lay-land #side[data-tab="syn"] #shopArea { flex: 0 0 auto; }
+  html.lay-land #side[data-tab="syn"] .syn .syneff { display: inline; }
   html.lay-land #side[data-tab="syn"] #synergy {
     flex: 1 1 auto; min-height: 0; overflow-y: auto;
     align-content: flex-start; overscroll-behavior: contain;

@@ -83,11 +83,13 @@ try {
       <div id="zoneHint"></div>
       <div id="lyDecalLo" class="ly"></div><!-- 地面に寝るもの: 着弾域・衝撃波・燃える地面 -->
       <div id="lyProps"   class="ly"></div><!-- 地物(奥): 岩山・草花 -->
-      <svg id="predictLayer" viewBox="0 0 7 9" preserveAspectRatio="none"></svg>
+      <!-- viewBox は「マス目そのもの」。render.js の syncBoardMetrics が data.js の
+           COLS/ROWS から起動時に上書きするので、ここの値は取りこぼし時の保険 -->
+      <svg id="predictLayer" viewBox="0 0 7 8" preserveAspectRatio="none"></svg>
       <div id="lyUnits"   class="ly"></div><!-- 駒・宝箱。この中では行番号が z になる -->
       <div id="lyGrassHi" class="ly"></div><!-- 地物(手前): 最前列の足元に被さる草 -->
       <div id="lyDecalHi" class="ly"></div><!-- 空中を通るもの: 薙ぎ払いの軌跡 -->
-      <svg id="predictHeads" viewBox="0 0 7 9" preserveAspectRatio="none"></svg>
+      <svg id="predictHeads" viewBox="0 0 7 8" preserveAspectRatio="none"></svg>
       <div id="lyLight"   class="ly"></div><!-- 光: 空気遠近・ビネット・地形の色被せ -->
     </div>
   </div>
@@ -108,13 +110,13 @@ try {
       <div id="shopStage">
         <div id="shopCards"></div>
         <div id="battleLog"></div>
-        <!-- 開戦の点呼のあいだだけ実況ログの上にかぶせる。左=コンボ数と全体バフ／右=成立した陣形 -->
+        <!-- 戦闘中ずっと左に居座るレール。コンボ数と、いま乗っているバフ（陣形＋シナジー）。
+             右の7割は実況ログがそのまま使う（点呼の陣形名も実況ログの1行として積む） -->
         <div id="comboPane">
           <div id="cpLeft">
             <div class="cpN"><b id="cpNum">0</b><span>コンボ</span></div>
             <div class="cpBuff" id="cpBuff"></div>
           </div>
-          <div id="cpList"></div>
         </div>
       </div>
       <div id="shopBtns">
