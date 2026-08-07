@@ -794,7 +794,7 @@
     display: none;
     position: absolute; left: 0; top: 0; bottom: 0;
     width: 30%;
-    padding: 2px 3px;
+    padding: 1px 3px;
     border-right: 1px solid #ffffff22;
     overflow: hidden;
   }
@@ -802,31 +802,52 @@
   /* 実況ログはレールのぶんだけ右へ寄る（幅を持つのはここだけ＝高さには一切触らない） */
   #shopArea.combo #battleLog { left: 30%; padding-left: 7px; }
 
+  /* ⚠️ **中身はレールの高さ（＝募兵カードの高さ）に収まりきること。** はみ出すと下が切れる
+     （overflow:hidden なので崩れはしないが、3位が消える）。
+     実測（`v1.66.0`）: 360/375px幅で 枠126 中身126 ／ 430px幅で 枠128 中身128。**余白ゼロ**。
+     行や文字を増やすときは必ず幅3種で測り直すこと
+     （fx.js の comboPaneSet に「行数は常に2行」という同じ注意書きがある） */
   #cpLeft {
     flex: 1;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 3px;
-    min-width: 0;
+    gap: 2px;
+    min-width: 0; overflow: hidden;
   }
-  #cpLeft .cpN { display: flex; flex-direction: column; align-items: center; line-height: 1; }
+  #cpLeft .cpN { display: flex; align-items: baseline; gap: 3px; line-height: 1; flex: none; }
   #cpLeft .cpN b {
-    font-size: 30px; font-weight: 900; color: var(--gold);
+    font-size: 20px; font-weight: 900; color: var(--gold);
     text-shadow: 0 0 8px #e8b33d66, 0 2px 2px #000;
     font-variant-numeric: tabular-nums;   /* 数が増えても幅が動かない＝左右にガタつかない */
   }
-  #cpLeft .cpN span { font-size: 9px; font-weight: 700; color: var(--parchment-dim); letter-spacing: .08em; }
+  #cpLeft .cpN span { font-size: 8.5px; font-weight: 700; color: var(--parchment-dim); letter-spacing: .04em; }
   /* バフの内訳。陣形（割合）とシナジー（定額）を2段で出す。
      どちらも「いま盤の駒に乗っている数字」で、ここが唯一まとまって見える場所 */
   #cpLeft .cpBuff {
     font-size: 11px; font-weight: 800; color: var(--parchment);
-    text-align: center; line-height: 1.3; white-space: nowrap;
-    display: flex; flex-direction: column; gap: 3px;
+    text-align: center; line-height: 1.15; white-space: nowrap;
+    display: flex; flex-direction: column; gap: 2px; flex: none;
   }
-  #cpLeft .cpBuff i { font-style: normal; opacity: .5; font-size: 8.5px; display: block; letter-spacing: .02em; }
+  #cpLeft .cpBuff i { font-style: normal; opacity: .5; font-size: 7.5px; display: block; letter-spacing: .02em; }
   #cpLeft .cpBuff .cpRow { display: block; }
-  #cpLeft .cpBuff .cpRow b { display: block; font-size: 12px; }
+  #cpLeft .cpBuff .cpRow b { display: block; font-size: 11px; }
   #cpLeft .cpBuff .cpRow.form b { color: var(--gold); }
   #cpLeft .cpBuff .cpRow.syn  b { color: #b6e3ff; }
+  #cpLeft .cpBuff .cpRow.roll b { color: #ffc9e6; }
+  /* バフ上位3体。**並べ替えは transform だけ**で動かす（fx.js の FLIP）ので、
+     ここでレイアウトアニメを足さないこと（二重に動いて酔う） */
+  #cpTop { display: flex; flex-direction: column; gap: 1px; width: 100%; flex: none; }
+  #cpTop .cpT {
+    display: flex; align-items: center; gap: 2px;
+    font-size: 9px; font-weight: 800; color: var(--parchment);
+    background: #00000030; border-radius: 4px; padding: 0 3px;
+    white-space: nowrap; overflow: hidden;
+  }
+  #cpTop .cpRank {
+    font-style: normal; font-size: 8px; font-weight: 900; color: var(--gold);
+    width: 8px; flex: none; text-align: center;
+  }
+  #cpTop .cpIcon { width: 15px; height: 16px; object-fit: contain; image-rendering: pixelated; flex: none; }
+  #cpTop .cpT b { font-weight: 800; letter-spacing: -.02em; }
   /* 数が増えた瞬間だけ跳ねる。transform なので合成のみ（README「描画コストの原則」） */
   #cpLeft .cpN b.pop { animation: cpPop .34s cubic-bezier(.3,.9,.35,1.3); }
   @keyframes cpPop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
@@ -1559,6 +1580,15 @@
     padding: 3px 4px; border-bottom: 1px solid #00000014;
   }
   .frow b { color: #6b4f23; }
+  /* 効果のチップ。**条件（何を並べるか）と効果（何が伸びるか）を見た目で分ける**のが目的。
+     一覧が13種あるので、地の文に混ぜると条件と効果が溶けて読めなくなる */
+  .ffx {
+    display: inline-block; font-size: 10px; font-weight: 800; white-space: nowrap;
+    background: #6b4f2318; border: 1px solid #6b4f2333; color: #4a3a22;
+    padding: 0 5px; border-radius: 999px; margin-left: 4px;
+  }
+  .ffx.big { background: #c08a3e28; border-color: #c08a3e66; }
+  .fex-cap .ffx { margin-left: 0; margin-top: 2px; }
   /* 神話魔法使い: 燃える地面 */
   /* シナジー発動の光輪。駒(.tok)の子として絵の「後ろ」(z-index:-1)に出るので視認性を落とさない。
      左右にずらした2つの放射グラデーションを重ねることで、2系統持ちの駒を2色に染め分ける

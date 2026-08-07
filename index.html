@@ -116,6 +116,8 @@ try {
           <div id="cpLeft">
             <div class="cpN"><b id="cpNum">0</b><span>コンボ</span></div>
             <div class="cpBuff" id="cpBuff"></div>
+            <!-- バフがいちばん乗っている3体。点呼が進むと順位が入れ替わる（fx.js comboPaneTop） -->
+            <div id="cpTop"></div>
           </div>
         </div>
       </div>
@@ -142,7 +144,28 @@ try {
 <div id="toast"></div>
 
 <!-- 読み込み順は依存関係どおり。最後の ui.js がイベント登録とゲーム起動を行う -->
+
+
+
+
+
+
+
+
 <!-- 陣形の検出。team.js の autoPlace から呼ぶので必ず前に置く -->
+
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
