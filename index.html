@@ -37,20 +37,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="酒場戦記">
 <link rel="stylesheet" href="./css/style.css">
-<script>
-/* 横向きレイアウトを最初の1フレームから適用する（本体JSはページ末尾で読み込まれるため、
-   ここで先に html.lay-land を付けないと縦→横のちらつきが出る）。
-   判定ロジックは js/render.js の applyLayoutMode() と一致させること。
-   ※このブロックに body の閉じタグや script の閉じタグを文字列として書かないこと:
-     build.js が最初の body 閉じタグを game.min.js の挿入位置に使うため、ここに書くと
-     ビルド後の index.html が壊れる（本体JSが読み込まれなくなる） */
-try {
-  var m = localStorage.getItem('sakabaLayoutMode_v1') || 'auto';
-  var wide = innerWidth >= 600;   // 実測幅でも縛る（render.js の LAND_MIN_W と揃えること）
-  if (wide && (m === 'landscape' || (m === 'auto' && matchMedia('(orientation: landscape) and (min-width: 600px)').matches)))
-    document.documentElement.classList.add('lay-land');
-} catch (e) {}
-</script>
 </head>
 <body>
 <div id="app">
@@ -94,57 +80,50 @@ try {
     </div>
   </div>
 
-  <!-- 横向きレイアウトでは #side が右カラムになる（縦向きでは従来どおり縦に積むだけ） -->
-  <div id="side">
-    <div id="tabBar">
-      <button class="tab on" data-tab="shop">🍺募兵</button>
-      <button class="tab" data-tab="syn">✨シナジー</button>
+  <div id="infoBar"></div>
+  <div id="synergy"></div>
+
+  <div id="shopArea">
+    <!-- ═══ 募兵の見出しブロック（2行）＋ 控え ═══
+         1行目 = 店名 ／ 利子の予告（2段）
+         2行目 = Tier出現率
+         控え  = **この2行の「まん中の空き」に重ねる**（絶対配置）。
+
+         ⚠️ **控えを行の中に流し込むと、行がそのぶん高くなって盤が縮む。**
+           右端に置いた版は利子表記と同じ列で当たるので2行目を 15→31px に押し広げ、
+           盤を16px食っていた。まん中は**店名（左）とも利子（右）とも当たらない**ので、
+           2行ぶんの高さ（約39px）をまるごとタダで使える。
+         ⚠️ 絶対配置なので **#tierOdds が :empty で消えても位置が動かない**
+           （戦闘・宴・チュートリアルで消える。中に入れると切り替わりで横に滑って見えた）。 -->
+    <div id="shopHead">
+      <div id="shopTitle">
+        <span id="shopName">🍺 酒場の募兵</span>
+        <span id="incomeNote"></span>
+      </div>
+      <div id="shopRow2"><div id="tierOdds"></div></div>
+      <span id="benchSlots"></span>
     </div>
-    <div id="infoBar"></div>
-    <div id="synergy"></div>
-
-    <div id="shopArea">
-      <!-- ═══ 募兵の見出しブロック（2行）＋ 控え ═══
-           1行目 = 店名 ／ 利子の予告（2段）
-           2行目 = Tier出現率
-           控え  = **この2行の「まん中の空き」に重ねる**（絶対配置）。
-
-           ⚠️ **控えを行の中に流し込むと、行がそのぶん高くなって盤が縮む。**
-             右端に置いた版は利子表記と同じ列で当たるので2行目を 15→31px に押し広げ、
-             盤を16px食っていた。まん中は**店名（左）とも利子（右）とも当たらない**ので、
-             2行ぶんの高さ（約39px）をまるごとタダで使える。
-           ⚠️ 絶対配置なので **#tierOdds が :empty で消えても位置が動かない**
-             （戦闘・宴・チュートリアルで消える。中に入れると切り替わりで横に滑って見えた）。 -->
-      <div id="shopHead">
-        <div id="shopTitle">
-          <span id="shopName">🍺 酒場の募兵</span>
-          <span id="incomeNote"></span>
-        </div>
-        <div id="shopRow2"><div id="tierOdds"></div></div>
-        <span id="benchSlots"></span>
-      </div>
-      <!-- 募兵カードと実況ログは同じ枠に重ねる（#shopStage）。高さは常にカード側が決める（CSS参照） -->
-      <div id="shopStage">
-        <div id="shopCards"></div>
-        <div id="battleLog"></div>
-        <!-- 戦闘中ずっと左に居座るレール。コンボ数と、いま乗っているバフ（陣形＋シナジー）。
-             右の7割は実況ログがそのまま使う（点呼の陣形名も実況ログの1行として積む） -->
-        <div id="comboPane">
-          <div id="cpLeft">
-            <div class="cpN"><b id="cpNum">0</b><span>コンボ</span></div>
-            <div class="cpBuff" id="cpBuff"></div>
-            <!-- バフがいちばん乗っている3体。点呼が進むと順位が入れ替わる（fx.js comboPaneTop） -->
-            <div id="cpTop"></div>
-          </div>
+    <!-- 募兵カードと実況ログは同じ枠に重ねる（#shopStage）。高さは常にカード側が決める（CSS参照） -->
+    <div id="shopStage">
+      <div id="shopCards"></div>
+      <div id="battleLog"></div>
+      <!-- 戦闘中ずっと左に居座るレール。コンボ数と、いま乗っているバフ（陣形＋シナジー）。
+           右の7割は実況ログがそのまま使う（点呼の陣形名も実況ログの1行として積む） -->
+      <div id="comboPane">
+        <div id="cpLeft">
+          <div class="cpN"><b id="cpNum">0</b><span>コンボ</span></div>
+          <div class="cpBuff" id="cpBuff"></div>
+          <!-- バフがいちばん乗っている3体。点呼が進むと順位が入れ替わる（fx.js comboPaneTop） -->
+          <div id="cpTop"></div>
         </div>
       </div>
-      <div id="shopBtns">
-        <button class="btn" id="rerollBtn">🎲 1G</button>
-        <button class="btn" id="lockModeBtn" title="取り置き">🔒</button>
-        <button class="btn" id="capBtn">👥 +1枠</button>
-        <button class="btn" id="sellBtn">💰 売却</button>
-        <button class="btn" id="fightBtn">⚔️ 戦闘開始</button>
-      </div>
+    </div>
+    <div id="shopBtns">
+      <button class="btn" id="rerollBtn">🎲 1G</button>
+      <button class="btn" id="lockModeBtn" title="取り置き">🔒</button>
+      <button class="btn" id="capBtn">👥 +1枠</button>
+      <button class="btn" id="sellBtn">💰 売却</button>
+      <button class="btn" id="fightBtn">⚔️ 戦闘開始</button>
     </div>
   </div>
   <div id="tutBox"></div>

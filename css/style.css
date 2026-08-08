@@ -390,8 +390,8 @@
     transition: left .2s cubic-bezier(.3,.8,.4,1), top .2s cubic-bezier(.3,.8,.4,1), opacity .3s;
     cursor: pointer;
     transform-origin: 50% 100%;
-    /* 末尾の scale は横向き時の駒サイズ調整（js/render.js updateTokenScale が --tok-scale を設定）。
-       縦向きでは変数が無く scale(1)＝無操作。原点が足元なので接地位置は動かない */
+    /* 末尾の scale は端末ごとの駒サイズ調整（js/render.js updateTokenScale が --tok-scale を設定）。
+       変数が無ければ scale(1)＝無操作。原点が足元なので接地位置は動かない */
     transform: scaleY(calc(1 / var(--stretch))) rotateX(calc(-1 * var(--tilt))) scale(var(--tok-scale, 1));
   }
   /* 足元の影。二重にして「接地」を作る:
@@ -670,14 +670,6 @@
     line-height: 1; margin-top: 1px;
   }
 
-  /* ───── side（情報バー＋シナジー＋酒場）をまとめる箱 ─────
-     縦向きでは「gap:6px で縦に積む」だけ＝#app 直下に並んでいた頃とピクセル等価。
-     横向き（html.lay-land）ではこれが右カラムになり、タブで中身を切り替える。
-     ※ display:contents にしてはいけない: #app > * { z-index:1 }（前述）が効かなくなり、
-       #app::before の暗いビネットの下に酒場パネルが沈む */
-  #side { display: flex; flex-direction: column; gap: 6px; flex: 0 0 auto; min-width: 0; }
-  #tabBar { display: none; }   /* 横向きのときだけ出す */
-
   /* ───── info strip ───── */
   #infoBar {
     flex: 0 0 auto;
@@ -702,9 +694,6 @@
 
   /* ───── synergy ───── */
   #synergy { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; flex: 0 0 auto; }
-  /* シナジーの効果テキストは既定で隠す。**点灯の有無で行数が変わると盤の高さが揺れる**ため
-     （縦持ちでは体数と段階だけを出す）。横持ちの「✨シナジー」タブでだけ見せる */
-  .syn .syneff { display: none; }
   .syn {
     display: flex; align-items: center; gap: 3px;
     font-size: 9.5px; font-weight: 700;
@@ -830,8 +819,7 @@
        一致するのは「特定の画面幅 × 珍客のいない募兵」だけで、それ以外では必ずずれていた */
   #shopStage { position: relative; }
   /* min-height は実況ログの下限（カードが低い狭幅端末でも実況が窮屈にならない高さ）。
-     跳ね対策ではないので #battleLog と揃える必要はもう無い。
-     ※ 横持ちでは html.lay-land #shopCards が min-height:0 で打ち消す（縦に伸ばして使うため） */
+     跳ね対策ではないので #battleLog と揃える必要はもう無い */
   #shopCards { display: flex; gap: 6px; justify-content: center; min-height: 128px; }
 
   /* ───── 戦況実況ログ（戦闘中は募兵枠を再利用）───── */
@@ -1135,8 +1123,8 @@
      cover ＝ 枠の広い辺（＝横幅）に合わせて拡大し、あふれた下半身を枠外へ逃がす。
      見えるのは上から 66%（頭〜腰）で、兜・フード・盾など識別要素は残る。
      ※ 高さを固定せず aspect-ratio にしてあるのは、見える割合＝高さ÷幅 だから。
-       固定高だと横向きレイアウトの広いカード（枠102px）で 48% まで下がり、顎が切れた。
-       比で持てば、縦持ち4枚/5枚・横持ち・折り返しの端カード、どの幅でも同じ胸像になる。
+       固定高だと広いカード（枠102px）で 48% まで下がり、顎が切れた。
+       比で持てば、4枚並び/5枚並び・折り返しの端カード、どの幅でも同じ胸像になる。
      ※ transform で更に寄せてはいけない。この絵は 96×96 のほぼ全面に描かれており
        （実測 bbox 幅 72〜96px）、拡大すると腕・武器・盾の左右が切れる。cover が上限。
      ※ object-position が top なのは頭頂を切らないため（絵の中身は y=0〜9 から始まる）。
@@ -1377,7 +1365,7 @@
   }
 
   /* ───── ★アップの見せ場（fx.js starUpFx）─────
-     #fx の子＝画面座標。盤の中央に出す（横持ちで画面中央は盤と酒場の継ぎ目になるため）。
+     #fx の子＝画面座標。盤の中央に出す（画面中央だと酒場側に落ちるため）。
      操作は止めないので pointer-events:none。色は JS が --su（本体）/--sug（光）に流し込む */
   .starup {
     position: absolute; z-index: 47;
@@ -1475,11 +1463,6 @@
     background: linear-gradient(180deg, #ffd66e, #e8a93c);
     border: 1px solid #b8801f; border-radius: 7px; padding: 0 4px;
     box-shadow: 0 1px 2px #0008;
-  }
-  /* 背水の陣: 固定部隊バッジ */
-  .tok .tfix {
-    position: absolute; top: -7px; left: -8px; z-index: 3;
-    font-size: 10px; filter: drop-shadow(0 1px 1px #000);
   }
   /* 霧マップ: 盤面に薄い霧のオーバーレイ */
   #board.fog::after {
@@ -1616,7 +1599,7 @@
     font-size: 29px; color: #ff9b7a;
     text-shadow: 0 0 4px #000, 0 0 4px #000, 0 2px 6px #000, 0 0 20px #ff6a3d80;
   }
-  /* ヘルプのタブ（基本／陣形／図鑑）。盤の #tabBar とは別物（あちらは横向きレイアウト専用） */
+  /* ヘルプのタブ（基本／陣形／図鑑） */
   .htabs { display: flex; gap: 4px; margin: 2px 0 6px; }
   .htabs .htab {
     flex: 1; padding: 6px 4px; font: inherit; font-size: 12px; font-weight: 700;
@@ -1765,7 +1748,7 @@
     animation: panelin .35s cubic-bezier(.34,1.56,.64,1);
     /* 安全網: 中身が画面を超えてもパネル内でスクロールできるようにする。
        #overlay は overflow:visible の中央寄せなので、これが無いと画面外へ出たボタンに
-       一切届かない＝進行不能になる（横持ちは html.lay-land #panel が同じ役目）。
+       一切届かない＝進行不能になる。
        通常の高さでは max-height に当たらず、従来と何も変わらない */
     max-height: calc(100dvh - 20px);
     overflow-y: auto; overscroll-behavior: contain;
@@ -1815,7 +1798,7 @@
   /* ───── タイトル画面（img/ui/title_menue.png ＋ 板ボタン） ─────
      ■ 1枚絵を画面いっぱいに出し、その上にボタンを載せる。絵(128×277)は縦長スマホの
        縦横比に合わせて描かれている（実測の黒帯: 375×812=0px / 390×844=0px / 414×896=0px /
-       430×932=1px / 360×640=左右32px / 横持ち900×450=左右346px）。
+       430×932=1px / 360×640=左右32px）。
        端末差は黒帯で吸収する＝**絵は絶対に引き伸ばさない**。
      ■ .title-stage は「絵とぴったり同じ矩形」。aspect-ratio + max-width/max-height で
        contain と同じ収まり方を作っているので、中のボタンを % で置けば
@@ -1840,9 +1823,8 @@
     max-width: 100%; max-height: 100%;     /* ここまでで contain 相当の収まりになる */
     line-height: 0;
   }
-  /* 絵の矩形。縦持ちではステージと同じ大きさ（＝重ねる土台）、横持ちでは左のカラムになる。
-     .title-ui と**兄弟**にしてあるのが肝で、これが無いとボタンが絵の枠の中に閉じ込められて
-     横持ちで隣へ出せない（実際に踏んだ: ボタン幅が絵の幅188pxに縛られた） */
+  /* 絵の矩形。ステージと同じ大きさ（＝ボタンを重ねる土台）。
+     .title-ui と**兄弟**にしてあるのが肝で、入れ子にするとボタン幅が絵の幅に縛られる */
   #panel.title-full .title-frame { position: absolute; inset: 0; }
   #panel.title-full .title-bg {
     width: 100%; height: 100%; display: block;
@@ -1919,10 +1901,10 @@
     #panel.title-full .title-lamp,
     #panel.title-full .title-inglow { animation: none; }
   }
-  /* ボタン類の入れ物。縦持ちは絵の上に重ねる（inset:0）、横持ちは絵の隣へ出す（下の lay-land） */
+  /* ボタン類の入れ物。絵の上に重ねる */
   #panel.title-full .title-ui { position: absolute; inset: 0; }
-  /* 文字サイズは**ステージ幅**を基準にする。vh だけで書くと横持ちでステージが
-     画面の1/5幅まで縮んだときに 7px まで落ちて読めない（実測）。
+  /* 文字サイズは**ステージ幅**を基準にする。vh だけで書くと画面が低いときに
+     文字が 7px まで落ちて読めない（実測）。
      ステージ幅 = min(100vw, 100vh×0.4621) なので、その1% = min(1vw, 0.4621vh) */
   /* 設定は絵の右上角へ小さく重ねる（絵の題字を隠さない位置） */
   #panel.title-full .title-gear {
@@ -2114,14 +2096,14 @@
     padding: 8px 10px 9px; margin-bottom: 11px;
   }
   #panel .runcard-title { font-size: 10px; font-weight: 800; color: #8a6b3a; margin-bottom: 6px; }
-  /* 駒を大きくした分、背水の陣（固定7＋部隊10＝17体）だと5段に伸びてパネルを押し出す。
+  /* 駒を大きくした分、部隊が多いと段が伸びてパネルを押し出す。
      ここだけスクロールさせて、共有ボタンと「タイトルへ」は必ず画面内に残す */
   #panel .runcard-units {
     display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-bottom: 7px;
     max-height: 34dvh; overflow-y: auto; overscroll-behavior: contain;
   }
   /* 走り終えた編成を「見せる」場所なので大きめに取る（旧36px幅では誰がいたのか読めなかった）。
-     1行6体・部隊上限10体＋固定部隊でも2〜3行で収まる */
+     1行6体・部隊上限10体でも2行で収まる */
   #panel .rcu {
     display: flex; flex-direction: column; align-items: center;
     width: 52px; padding: 3px 0 2px;
@@ -2453,161 +2435,6 @@
   }
   #toast.long b { color: var(--gold); font-size: 13.5px; }
   #toast.long .tsub { color: #7be3a0; font-weight: 900; }
-
-  /* ═════════════════════════════════════════════════════════════════
-     横向きレイアウト（html.lay-land のときだけ有効）
-     盤面を左、酒場まわりを右カラムへ。右カラムはタブで中身を切り替えて場所を稼ぐ。
-     クラスの付け外しは js/render.js の applyLayoutMode()（⚙️設定＝自動/縦/横）。
-     ここに書いたセレクタは全て html.lay-land 配下＝縦向きには一切影響しない。
-     ※ 盤面は7列×9行の「縦長」なので、横持ちの画面（高さが足りない）では
-       盤も駒も縦持ちより小さくなる。広くなるのはタブレット/PCの横。
-
-     ★安全網★ 以下は全て @media (min-width: 600px) の中にある。
-     2カラムに足りない幅では「1つもマッチしない」＝自動的に縦1カラムのまま。
-     （これが無いと、設定で「横」を強制した狭い端末や、回転直後に実寸とメディアクエリが
-       ずれる iOS で、盤面カラムが 390-20-8-300 = 62px に潰れる。
-       JS側(render.js LAND_MIN_W)にも同じ幅のガードがあり二重化している。
-       閾値を変えるときは両方揃えること）
-     ═════════════════════════════════════════════════════════════════ */
-  @media (min-width: 600px) {
-  html.lay-land { --side-w: clamp(300px, 38vw, 400px); }
-  html.lay-land #app {
-    max-width: none;
-    display: grid;
-    /* minmax(0,…) は必須: 素の 1fr は min-content 以下に縮まず #board{flex:1} が潰せない */
-    grid-template-columns: minmax(0, 1fr) var(--side-w);
-    grid-template-rows: auto minmax(0, 1fr);
-    grid-template-areas:
-      "top   top"
-      "board side";
-    column-gap: 8px;
-    row-gap: 6px;
-  }
-  html.lay-land #topbar    { grid-area: top; }
-  html.lay-land #boardWrap { grid-area: board; }
-  html.lay-land #side      { grid-area: side; min-height: 0; }
-
-  /* ── 右カラムのタブ ── */
-  html.lay-land #tabBar { display: flex; gap: 4px; flex: 0 0 auto; }
-  html.lay-land .tab {
-    flex: 1;
-    font-family: inherit; font-weight: 900; font-size: 11px;
-    padding: 5px 0; border-radius: 8px; cursor: pointer;
-    background: #00000044; border: 1px solid #ffffff18; color: #ffffff77;
-  }
-  html.lay-land .tab.on {
-    background: linear-gradient(180deg, #5a3f1e, #3c2a14);
-    border-color: var(--gold-deep); color: var(--parchment);
-  }
-  html.lay-land .tab:active { transform: translateY(1px); }
-  /* 情報バーは常時表示のままパネル最下部へ（タブに入れると駒タップの反応が消えるため） */
-  html.lay-land #infoBar { order: 9; }
-
-  /* 募兵タブ: 酒場が伸び、シナジーは隠れる */
-  html.lay-land #side[data-tab="shop"] #synergy { display: none; }
-  html.lay-land #side[data-tab="shop"] #shopArea { flex: 1 1 auto; min-height: 0; }
-  /* シナジータブ: 酒場はボタンだけの高さに縮む（⚔️戦闘開始は常に押せる） */
-  html.lay-land #side[data-tab="syn"] #shopTitle,
-  html.lay-land #side[data-tab="syn"] #tierOdds,
-  html.lay-land #side[data-tab="syn"] #shopStage { display: none; }
-  html.lay-land #side[data-tab="syn"] #shopArea { flex: 0 0 auto; }
-  html.lay-land #side[data-tab="syn"] .syn .syneff { display: inline; }
-  html.lay-land #side[data-tab="syn"] #synergy {
-    flex: 1 1 auto; min-height: 0; overflow-y: auto;
-    align-content: flex-start; overscroll-behavior: contain;
-  }
-
-  /* 縦長パネルを使い切る。padding-top は必須（.cost バッジが top:-7px なので
-     overflow:auto の切り取り box で上端が欠ける） */
-  html.lay-land #shopStage { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-  html.lay-land #shopCards {
-    flex: 1 1 auto; min-height: 0;
-    flex-wrap: wrap; align-content: flex-start;
-    overflow-y: auto; overscroll-behavior: contain;
-    padding: 9px 4px 4px;
-  }
-  html.lay-land #shopCards .card { flex: 1 1 78px; max-width: 110px; }
-  /* 実況ログは縦持ちと同じく inset:0 で枠いっぱい＝高さの指定は要らない */
-
-  /* オーバーレイのパネルは横向きだと画面高さを超える（body は overflow:hidden で
-     スクロールできない＝タイトル/ヘルプ/図鑑/闘技場が操作不能になる）ので必ずスクロール可に */
-  html.lay-land #panel {
-    max-height: calc(100dvh - 20px); overflow-y: auto; overscroll-behavior: contain;
-    width: min(94vw, 760px);          /* 横画面いっぱいに広げる（縦持ちは 340px のまま） */
-  }
-  html.lay-land .help-scroll { max-height: none; }   /* 入れ子スクロールは1つに */
-  /* 長い読み物（ヘルプ・ユニット図鑑）は2段組にして高さを半分にする */
-  html.lay-land .help-scroll { columns: 2; column-gap: 22px; }
-  html.lay-land .help-scroll > * { break-inside: avoid; }
-  html.lay-land .help-scroll h3 { break-after: avoid; }   /* 見出しだけ段の底に取り残さない */
-  /* パネルが広くなっても押しやすい幅に保つ（760px幅のボタンは押しにくい） */
-  html.lay-land #panel .btn { max-width: 420px; margin-left: auto; margin-right: auto; }
-  /* タイトル: 左に1枚絵、右に操作ボタンを並べる（縦持ちでは .start-cols は素のブロック＝
-     絵の下にボタンが積まれる）。横向きは高さが足りないので、絵は縦幅いっぱいまで使う */
-  html.lay-land .start-cols {
-    display: grid; grid-template-columns: 1.05fr .95fr;
-    gap: 16px; align-items: start; text-align: left;
-  }
-  html.lay-land .start-cols .help-grid { margin-bottom: 0; }
-  /* タイトル（横持ち）: 絵の上にボタンを載せる構成が使えない。横画面では絵が
-     画面の1/5幅しか取れず、実測 900×450 で ステージ199px幅・板30px高・リンク7px になり
-     押せない・読めないため。**絵は原寸比のまま左に置き、ボタンは絵の隣（右）へ出す**。
-     絵を引き伸ばさない方針は縦持ちと同じで、余りは黒で埋まる。 */
-  html.lay-land #panel.title-full { padding: 2.5vh 4vw; }
-  /* ステージ自体を横並びの器にし、絵(.title-frame)とボタン(.title-ui)を左右に置く */
-  html.lay-land #panel.title-full .title-stage {
-    aspect-ratio: auto; width: 100%; height: 100%; max-width: none;
-    display: flex; flex-direction: row; align-items: center; gap: 4vw;
-  }
-  html.lay-land #panel.title-full .title-frame {
-    position: static; inset: auto;
-    height: 100%; aspect-ratio: 128 / 277; flex: 0 0 auto;   /* 絵は原寸比のまま */
-  }
-  /* 絵の隣へ出す＝重ねるための絶対配置を解除して素の縦積みに戻す */
-  html.lay-land #panel.title-full .title-ui {
-    position: static; inset: auto;
-    flex: 1 1 auto; min-width: 0;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    gap: 1.5vh;
-  }
-  /* max-width 200px は「板6枚＋隙間5つ＋リンク」が 900×450 の縦に収まる実測上限
-     （300px だと板77px高×6＝462pxで溢れ、210px＋隙間4%でも2pxだけ溢れた） */
-  html.lay-land #panel.title-full .start-actions,
-  html.lay-land #panel.title-full .title-links {
-    position: static; inset: auto; transform: none;
-    width: 100%; max-width: 200px; padding: 0; background: none;
-  }
-  /* 横持ちは縦の余りが少ないので隙間を詰める（縦持ちの 6.5% だと 18.6px になり
-     板6枚＋リンクが 450px の縦からあふれた）。4% ＝ 約8px */
-  html.lay-land #panel.title-full .start-actions .mplate { margin-bottom: 4%; }
-  html.lay-land #panel.title-full .start-actions .mplate:last-child { margin-bottom: 0; }
-  html.lay-land #panel.title-full .title-links { text-align: center; }
-  html.lay-land #panel.title-full .title-gear { position: absolute; top: 2vh; right: 3vw; width: auto; padding: 5px 9px; aspect-ratio: auto; }
-  html.lay-land #panel.title-full .title-ver { position: absolute; right: 3vw; bottom: 1.5vh; }
-  html.lay-land .start-actions { text-align: center; }
-
-  /* チュートリアルの吹き出しが右カラム（🎲や⚔️ボタン）を覆わないように */
-  html.lay-land #tutBox {
-    right: auto; top: 20%;
-    width: min(400px, calc(100% - var(--side-w) - 32px));
-  }
-
-  /* 画面中央固定の演出は盤面カラムの中央へ寄せる */
-  html.lay-land #biomeBanner { left: calc((100% - var(--side-w)) / 2); }
-  html.lay-land #toast { left: calc((100% - var(--side-w)) / 2); bottom: 8%; }
-
-  }  /* ← @media (min-width: 600px) の終わり（横向きレイアウト本体） */
-
-  /* ── 高さが極端に低い横持ち（スマホ）: 盤の上の帯を盤に重ねて高さを稼ぐ ──
-     #boardLabel / #warGauge はどちらも pointer-events:none・z-index:3 なので重ねられる。
-     こちらも min-width 条件を必ず併記する（@media はネストできないため and で書く） */
-  @media (min-width: 600px) and (max-height: 480px) {
-    html.lay-land #app { padding-top: 4px; padding-bottom: calc(4px + env(safe-area-inset-bottom)); }
-    html.lay-land #boardLabel { position: absolute; top: 15px; left: 0; right: 0; }
-    html.lay-land #warGauge   { position: absolute; top: 0; left: 0; right: 0; margin: 0; }
-    html.lay-land #board      { margin-top: 12px; }
-    html.lay-land #slamText   { font-size: 42px; }
-  }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
