@@ -759,7 +759,13 @@
   }
   .bslot.has { border-style: solid; border-color: #ffffff33; background: #3a2a18; cursor: pointer; }
   .bslot.has.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 6px #e8b33d66; }
-  .bslot.has:active { transform: translateY(1px); }
+  .bslot:active { transform: translateY(1px); }
+  /* 盤の駒を選んでいる間は「送り先」。**部隊→控えの道はここにしか無い**ので、
+     光らせないと片道の機能に見える（🪑控えへ ボタンを廃した代わり）。
+     ⚠️ box-shadow だけで示すこと。枠の大きさを変えると見出し行の高さが動いて盤が跳ねる */
+  .bslot.drop { border-color: var(--gold); border-style: dashed; cursor: pointer;
+                box-shadow: 0 0 5px #e8b33d55 inset; }
+  .bslot.drop:not(.has)::after { opacity: .6; }
   .bface { width: 22px; height: 24px; object-fit: cover; object-position: 50% 12%;
            image-rendering: pixelated; }
   .bslot b {
@@ -872,8 +878,16 @@
     font-style: normal; font-size: 8px; font-weight: 900; color: var(--gold);
     width: 8px; flex: none; text-align: center;
   }
-  #cpTop .cpIcon { width: 15px; height: 16px; object-fit: contain; image-rendering: pixelated; flex: none; }
+  /* 顔だけを切り出す（controls の .bface と同じ切り方）。全身を 15px に縮めると
+     誰なのか判別できず「小さくて分かりにくい」になる。cover + 上寄せで頭が出る */
+  #cpTop .cpIcon { width: 16px; height: 16px; object-fit: cover; object-position: 50% 12%;
+                   border-radius: 3px; background: #00000030;
+                   image-rendering: pixelated; flex: none; }
   #cpTop .cpT b { font-weight: 800; letter-spacing: -.02em; }
+  #cpTop .cpTopLbl {
+    font-style: normal; font-size: 7.5px; font-weight: 700; opacity: .5;
+    letter-spacing: .02em; text-align: center; line-height: 1.1; padding-bottom: 1px;
+  }
   /* 数が増えた瞬間だけ跳ねる。transform なので合成のみ（README「描画コストの原則」） */
   #cpLeft .cpN b.pop { animation: cpPop .34s cubic-bezier(.3,.9,.35,1.3); }
   @keyframes cpPop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
