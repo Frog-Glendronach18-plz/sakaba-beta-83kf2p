@@ -104,14 +104,21 @@ try {
     <div id="synergy"></div>
 
     <div id="shopArea">
-      <!-- 見出し行 = 店名 ／ 控えの顔（空きスペースを使う） ／ 利子の予告（2段）。
-           高さは常に一定（控えが空でも枠は出す）＝盤が跳ねない -->
+      <!-- 見出し行 = 店名 ／ 利子の予告（2段）。高さは常に一定＝盤が跳ねない -->
       <div id="shopTitle">
         <span id="shopName">🍺 酒場の募兵</span>
-        <span id="benchSlots"></span>
         <span id="incomeNote"></span>
       </div>
-      <div id="tierOdds"></div>
+      <!-- 2段目 = Tier出現率 ／ 控えの顔。
+           ⚠️ **控えを #shopTitle から降ろしたのはここが横に広いから**。
+             見出し行では店名と利子に挟まれて 22px しか取れず、顔が判別できなかった。
+             ここなら Tier チップの右に 200px 前後余る＝札絵と同じ「胸像」で出せる。
+           ⚠️ この行の高さは**常に一定**にすること（控えが空でも枠を出す）。
+             #tierOdds は :empty で消えるので、行の高さは #benchSlots が決める -->
+      <div id="shopRow2">
+        <div id="tierOdds"></div>
+        <span id="benchSlots"></span>
+      </div>
       <!-- 募兵カードと実況ログは同じ枠に重ねる（#shopStage）。高さは常にカード側が決める（CSS参照） -->
       <div id="shopStage">
         <div id="shopCards"></div>

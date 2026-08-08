@@ -144,10 +144,21 @@
          overflow を付けると 3D が平面化されうる（decal層で実際に踏んだ）。 */
     clip-path: inset(-260px 0 -48px 0);
   }
+  /* ⚠️ **この行が2行になると盤がそのぶん縮む。**（#boardWrap の高さは固定で、
+       中の #board が残りを取る）。実測: 1行18px で盤318.5 ／ 2行36pxで盤305.7＝**13px縮む**。
+       しかも「⚑ ○コンボ」はコンボが増えるほど長くなるので、**遊ぶほど盤が小さくなっていた**。
+     対策は2つセット:
+       ① 3つの札に white-space:nowrap ＝ 札の中で折り返さない
+       ② 伸び縮みするのは #formCombo だけ（min-width:0 で潰れられるようにする）。
+          左右の札は flex:none で削らない
+     ⚠️ align-items も要る: 既定の stretch だと1つ2行になった瞬間に**3つとも2行の高さ**になる */
   #boardLabel {
-    display: flex; justify-content: space-between;
+    display: flex; justify-content: space-between; align-items: center;
     font-size: 10px; font-weight: 700; color: var(--parchment-dim);
-    padding: 0 4px;
+    padding: 0 4px; gap: 3px;
+    /* ⚑コンボ札だけ font-size が 1px 大きいので、出た瞬間に行が 1.5px 伸びて盤が動く。
+       札が有っても無くても同じ高さになるよう、いちばん高い状態で固定する */
+    min-height: 20px;
     position: relative;
     z-index: 3;            /* 盤・駒より常に前面 */
     pointer-events: none;  /* 下の駒のタップを妨げない */
@@ -156,7 +167,10 @@
     background: #1d120bcc;
     padding: 2px 8px;
     border-radius: 999px;
+    white-space: nowrap; flex: none;
   }
+  /* 唯一の伸縮枠。狭い端末では末尾から省略記号になる（盤を縮めるよりは良い） */
+  #boardLabel #formCombo { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   /* 部隊枠あふれ（恩返しの駆け込み合流）: 枠に収めるまで出撃不可の警告色 */
   #teamCount.over { color: #ffc9c0; background: #6a1e14cc; }
   /* 陣形のコンボ数（試作）。駒を動かすたびに動く数字なので、周りより一段強く出す */
@@ -745,17 +759,21 @@
   #shopName { white-space: nowrap; flex: none; }
   #incomeNote { white-space: nowrap; flex: none; text-align: right; line-height: 1.25; font-size: 9.5px; }
   #incomeNote i { font-style: normal; opacity: .7; }
-  /* 控えの顔。募兵の見出し行の**空きスペース**を使う（専用の行を足すと盤が縮む） */
-  #benchSlots { display: flex; gap: 3px; flex: 1 1 auto; justify-content: flex-start; min-width: 0; }
+  /* ── 2段目: Tier出現率 ＋ 控えの顔 ──
+     ⚠️ **高さは常に一定**。#tierOdds は :empty で消える（宴・チュートリアル・戦闘中）ので、
+       行の高さは #benchSlots が決める。控えが空でも枠を出すのはそのため */
+  #shopRow2 { display: flex; align-items: center; gap: 6px; padding: 1px 2px 0; }
+  /* Tierチップの右の余りの**まん中**に置く。見出し行では22pxしか取れず顔が判別できなかった */
+  #benchSlots { display: flex; gap: 5px; flex: 1 1 auto; justify-content: center; min-width: 0; }
   .bslot {
-    width: 22px; height: 24px; flex: none; position: relative;
+    width: 34px; height: 24px; flex: none; position: relative;
     border-radius: 4px; border: 1px dashed #ffffff44; background: #00000038;
     display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
   }
   /* 空き枠にも 🪑 を薄く入れる。**枠だけだと「そこに何かある」と気づけない**
      （前の版が「分かりにくい」と言われた原因がこれ） */
   .bslot:not(.has)::after {
-    content: '🪑'; font-size: 11px; opacity: .3; line-height: 24px;
+    content: '🪑'; font-size: 12px; opacity: .3; line-height: 24px;
   }
   .bslot.has { border-style: solid; border-color: #ffffff33; background: #3a2a18; cursor: pointer; }
   .bslot.has.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 6px #e8b33d66; }
@@ -766,7 +784,11 @@
   .bslot.drop { border-color: var(--gold); border-style: dashed; cursor: pointer;
                 box-shadow: 0 0 5px #e8b33d55 inset; }
   .bslot.drop:not(.has)::after { opacity: .6; }
-  .bface { width: 22px; height: 24px; object-fit: cover; object-position: 50% 12%;
+  /* 募兵カードと**同じ「胸像」の切り方**（.card .cport.bust .uimg 参照）。
+     ⚠️ 枠が正方形だと cover は何も切らない（絵も 96×96 の正方形）＝全身が縮むだけで、
+       object-position を書いても効かない。**横長の枠にして初めて下半身が枠外へ逃げる。**
+       34×24（比1.42）で上から 71%＝頭〜腰。札絵と同じ見え方になる */
+  .bface { width: 100%; height: 100%; object-fit: cover; object-position: top center;
            image-rendering: pixelated; }
   .bslot b {
     position: absolute; right: 0; top: -1px; font-size: 8px; color: #ffe9a8;
@@ -774,7 +796,8 @@
   }
   /* 募兵のTier出現率。募兵カードの真上に独立した行として置く（幅の狭い端末でも
      見出し行を圧迫しない）。中身が空＝宴・チュートリアル・戦闘中は行ごと消える */
-  #tierOdds { display: flex; gap: 3px; padding: 1px 2px 0; }
+  /* padding は #shopRow2 が持つ（二重に付けない） */
+  #tierOdds { display: flex; gap: 3px; flex: none; }
   #tierOdds:empty { display: none; }
   .todds { font-size: 9px; font-weight: 900; padding: 0 4px; border-radius: 999px; color: #1c150c; white-space: nowrap; }
   .todds.t1 { background: var(--t1); color: #f4e6d2; }
@@ -838,7 +861,13 @@
      （overflow:hidden なので崩れはしないが、3位が消える）。
      実測（`v1.66.0`）: 360/375px幅で 枠126 中身126 ／ 430px幅で 枠128 中身128。**余白ゼロ**。
      行や文字を増やすときは必ず幅3種で測り直すこと
-     （fx.js の comboPaneSet に「行数は常に2行」という同じ注意書きがある） */
+     （fx.js の comboPaneSet に「行数は常に2行」という同じ注意書きがある）
+
+     🛑 **`#cpLeft` の高さを測っても、はみ出しは絶対に見つからない。**
+       flex で高さが枠に固定されるので、中身が何px溢れても `getBoundingClientRect().height`
+       は枠と同じ値を返す（`justify-content:center` なので上下へ均等に溢れて下だけ切れる）。
+       確かめるときは **最後の `.cpT` の bottom と `#comboPane` の bottom を比べる**こと。
+       これで測らずに「126/128 で収まっている」と誤判定して、3位が6px切れたまま出した。 */
   #cpLeft {
     flex: 1;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -847,46 +876,46 @@
   }
   #cpLeft .cpN { display: flex; align-items: baseline; gap: 3px; line-height: 1; flex: none; }
   #cpLeft .cpN b {
-    font-size: 20px; font-weight: 900; color: var(--gold);
+    font-size: 17px; font-weight: 900; color: var(--gold);
     text-shadow: 0 0 8px #e8b33d66, 0 2px 2px #000;
     font-variant-numeric: tabular-nums;   /* 数が増えても幅が動かない＝左右にガタつかない */
   }
-  #cpLeft .cpN span { font-size: 8.5px; font-weight: 700; color: var(--parchment-dim); letter-spacing: .04em; }
+  #cpLeft .cpN span { font-size: 8px; font-weight: 700; color: var(--parchment-dim); letter-spacing: .04em; }
   /* バフの内訳。陣形（割合）とシナジー（定額）を2段で出す。
      どちらも「いま盤の駒に乗っている数字」で、ここが唯一まとまって見える場所 */
   #cpLeft .cpBuff {
-    font-size: 11px; font-weight: 800; color: var(--parchment);
-    text-align: center; line-height: 1.15; white-space: nowrap;
-    display: flex; flex-direction: column; gap: 2px; flex: none;
+    font-size: 10.5px; font-weight: 800; color: var(--parchment);
+    text-align: center; line-height: 1.08; white-space: nowrap;
+    display: flex; flex-direction: column; gap: 1px; flex: none;
   }
-  #cpLeft .cpBuff i { font-style: normal; opacity: .5; font-size: 7.5px; display: block; letter-spacing: .02em; }
+  #cpLeft .cpBuff i { font-style: normal; opacity: .5; font-size: 7px; display: block; letter-spacing: .02em; }
   #cpLeft .cpBuff .cpRow { display: block; }
-  #cpLeft .cpBuff .cpRow b { display: block; font-size: 11px; }
+  #cpLeft .cpBuff .cpRow b { display: block; font-size: 10.5px; }
   #cpLeft .cpBuff .cpRow.form b { color: var(--gold); }
   #cpLeft .cpBuff .cpRow.syn  b { color: #b6e3ff; }
   #cpLeft .cpBuff .cpRow.roll b { color: #ffc9e6; }
   /* バフ上位3体。**並べ替えは transform だけ**で動かす（fx.js の FLIP）ので、
      ここでレイアウトアニメを足さないこと（二重に動いて酔う） */
-  #cpTop { display: flex; flex-direction: column; gap: 1px; width: 100%; flex: none; }
+  #cpTop { display: flex; flex-direction: column; gap: 0; width: 100%; flex: none; }
+  /* ⚠️ **幅に余りが無い**（レールは募兵枠の3割）。順位・顔・数字を足すと 375px幅で
+     数字の右端が切れる。顔を大きくしたぶん、順位の桁とすき間を削って帳尻を合わせてある */
   #cpTop .cpT {
-    display: flex; align-items: center; gap: 2px;
+    display: flex; align-items: center; gap: 1px;
     font-size: 9px; font-weight: 800; color: var(--parchment);
     background: #00000030; border-radius: 4px; padding: 0 3px;
     white-space: nowrap; overflow: hidden;
   }
-  #cpTop .cpRank {
-    font-style: normal; font-size: 8px; font-weight: 900; color: var(--gold);
-    width: 8px; flex: none; text-align: center;
-  }
-  /* 顔だけを切り出す（controls の .bface と同じ切り方）。全身を 15px に縮めると
-     誰なのか判別できず「小さくて分かりにくい」になる。cover + 上寄せで頭が出る */
-  #cpTop .cpIcon { width: 16px; height: 16px; object-fit: cover; object-position: 50% 12%;
+  /* 1位だけ金文字。順位の数字は幅が足りず置けない（fx.js の comboPaneTop の⚠️） */
+  #cpTop .cpT:first-of-type b { color: var(--gold); }
+  /* 控え枠・募兵カードと**同じ「胸像」の切り方**。正方形の枠では cover が何も切らない
+     （.bface の⚠️と同じ罠）ので、ここも横長にすること。26×18（比1.44） */
+  #cpTop .cpIcon { width: 24px; height: 16px; object-fit: cover; object-position: top center;
                    border-radius: 3px; background: #00000030;
                    image-rendering: pixelated; flex: none; }
-  #cpTop .cpT b { font-weight: 800; letter-spacing: -.02em; }
+  #cpTop .cpT b { font-weight: 800; letter-spacing: -.03em; }
   #cpTop .cpTopLbl {
-    font-style: normal; font-size: 7.5px; font-weight: 700; opacity: .5;
-    letter-spacing: .02em; text-align: center; line-height: 1.1; padding-bottom: 1px;
+    font-style: normal; font-size: 7px; font-weight: 700; opacity: .5;
+    letter-spacing: .02em; text-align: center; line-height: 1; padding-bottom: 1px;
   }
   /* 数が増えた瞬間だけ跳ねる。transform なので合成のみ（README「描画コストの原則」） */
   #cpLeft .cpN b.pop { animation: cpPop .34s cubic-bezier(.3,.9,.35,1.3); }
