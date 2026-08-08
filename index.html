@@ -104,19 +104,23 @@ try {
     <div id="synergy"></div>
 
     <div id="shopArea">
-      <!-- 見出し行 = 店名 ／ 利子の予告（2段）。高さは常に一定＝盤が跳ねない -->
-      <div id="shopTitle">
-        <span id="shopName">🍺 酒場の募兵</span>
-        <span id="incomeNote"></span>
-      </div>
-      <!-- 2段目 = Tier出現率 ／ 控えの顔。
-           ⚠️ **控えを #shopTitle から降ろしたのはここが横に広いから**。
-             見出し行では店名と利子に挟まれて 22px しか取れず、顔が判別できなかった。
-             ここなら Tier チップの右に 200px 前後余る＝札絵と同じ「胸像」で出せる。
-           ⚠️ この行の高さは**常に一定**にすること（控えが空でも枠を出す）。
-             #tierOdds は :empty で消えるので、行の高さは #benchSlots が決める -->
-      <div id="shopRow2">
-        <div id="tierOdds"></div>
+      <!-- ═══ 募兵の見出しブロック（2行）＋ 控え ═══
+           1行目 = 店名 ／ 利子の予告（2段）
+           2行目 = Tier出現率
+           控え  = **この2行の「まん中の空き」に重ねる**（絶対配置）。
+
+           ⚠️ **控えを行の中に流し込むと、行がそのぶん高くなって盤が縮む。**
+             右端に置いた版は利子表記と同じ列で当たるので2行目を 15→31px に押し広げ、
+             盤を16px食っていた。まん中は**店名（左）とも利子（右）とも当たらない**ので、
+             2行ぶんの高さ（約39px）をまるごとタダで使える。
+           ⚠️ 絶対配置なので **#tierOdds が :empty で消えても位置が動かない**
+             （戦闘・宴・チュートリアルで消える。中に入れると切り替わりで横に滑って見えた）。 -->
+      <div id="shopHead">
+        <div id="shopTitle">
+          <span id="shopName">🍺 酒場の募兵</span>
+          <span id="incomeNote"></span>
+        </div>
+        <div id="shopRow2"><div id="tierOdds"></div></div>
         <span id="benchSlots"></span>
       </div>
       <!-- 募兵カードと実況ログは同じ枠に重ねる（#shopStage）。高さは常にカード側が決める（CSS参照） -->

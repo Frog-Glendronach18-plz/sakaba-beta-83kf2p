@@ -763,17 +763,32 @@
      ⚠️ **高さは常に一定**。#tierOdds は :empty で消える（宴・チュートリアル・戦闘中）ので、
        行の高さは #benchSlots が決める。控えが空でも枠を出すのはそのため */
   #shopRow2 { display: flex; align-items: center; gap: 6px; padding: 1px 2px 0; }
-  /* Tierチップの右の余りの**まん中**に置く。見出し行では22pxしか取れず顔が判別できなかった */
-  #benchSlots { display: flex; gap: 5px; flex: 1 1 auto; justify-content: center; min-width: 0; }
+  /* ── 控えの顔 ──
+     見出し2行の**まん中の空き**に重ねる。行の中に入れないので**高さを一切食わない**
+     （右端に流し込んだ版は2行目を 15→31px に押し広げ、盤を16px削っていた）。
+     ⚠️ 絶対配置なので #tierOdds が消えても動かない。
+     ⚠️ **枠の高さは2行ぶん（約39px）を超えないこと。** 超えると下の募兵カードに被る。
+     ⚠️ 左は店名・右は利子の予告と当たらない幅に収めること（実測: 360pxでも
+       店名は 95px まで、利子は 275px から。控えは 2枠＋すき間で 101px）。 */
+  /* ⚠️ **高さを固定すること。** #tierOdds は :empty で消える（戦闘中・宴・チュートリアル）ので、
+     固定しないと**戦闘に入った瞬間にブロックが 38→25px に縮んで盤が11px伸びる**。
+     募兵→戦闘の切り替わりで盤が animate せずに跳ねるのが、いちばん目につく崩れ方だった。
+     値は「控え枠(34px) ＋ 上下の余白」。控えを大きくするならここも一緒に上げること */
+  #shopHead { position: relative; min-height: 38px; }
+  #benchSlots {
+    display: flex; gap: 5px;
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    z-index: 2;
+  }
   .bslot {
-    width: 34px; height: 24px; flex: none; position: relative;
+    width: 48px; height: 34px; flex: none; position: relative;
     border-radius: 4px; border: 1px dashed #ffffff44; background: #00000038;
     display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
   }
   /* 空き枠にも 🪑 を薄く入れる。**枠だけだと「そこに何かある」と気づけない**
      （前の版が「分かりにくい」と言われた原因がこれ） */
   .bslot:not(.has)::after {
-    content: '🪑'; font-size: 12px; opacity: .3; line-height: 24px;
+    content: '🪑'; font-size: 16px; opacity: .3; line-height: 34px;
   }
   .bslot.has { border-style: solid; border-color: #ffffff33; background: #3a2a18; cursor: pointer; }
   .bslot.has.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 6px #e8b33d66; }
@@ -791,7 +806,7 @@
   .bface { width: 100%; height: 100%; object-fit: cover; object-position: top center;
            image-rendering: pixelated; }
   .bslot b {
-    position: absolute; right: 0; top: -1px; font-size: 8px; color: #ffe9a8;
+    position: absolute; right: 1px; top: 0; font-size: 9px; color: #ffe9a8;
     text-shadow: 0 1px 2px #000, 0 0 3px #000;
   }
   /* 募兵のTier出現率。募兵カードの真上に独立した行として置く（幅の狭い端末でも
