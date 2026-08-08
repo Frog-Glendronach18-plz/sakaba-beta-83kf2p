@@ -157,27 +157,6 @@
     padding: 2px 8px;
     border-radius: 999px;
   }
-  /* 控え（ベンチ）のバッジ。#boardLabel は pointer-events:none なので、ここだけ auto へ戻す。
-     ラベル行を分割せず #teamCount の中に入れてある（分けると狭い端末で文字が折り返す） */
-  #benchChip {
-    font-style: normal; font-size: 9.5px; font-weight: 800;
-    margin-left: 5px; padding: 1px 5px; border-radius: 999px;
-    background: #00000055; color: var(--parchment-dim);
-    pointer-events: auto; cursor: pointer;
-  }
-  #benchChip.on { background: #5a3f1e; color: var(--parchment); }
-  #benchChip:active { transform: translateY(1px); }
-  /* 控えの一覧（パネル） */
-  .benchRow {
-    display: flex; align-items: center; justify-content: space-between; gap: 6px;
-    padding: 5px 4px; border-bottom: 1px solid #00000018;
-  }
-  .benchWho { display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: #4a3a22; }
-  .benchWho small { opacity: .75; font-size: 11px; }
-  .benchAct { display: flex; gap: 4px; flex: none; }
-  .btn.bmini { width: auto; padding: 5px 9px; font-size: 11.5px; margin: 0; }
-  .btn.bmini.bsell { background: linear-gradient(180deg,#a05a3a,#7a4028); }
-
   /* 部隊枠あふれ（恩返しの駆け込み合流）: 枠に収めるまで出撃不可の警告色 */
   #teamCount.over { color: #ffc9c0; background: #6a1e14cc; }
   /* 陣形のコンボ数（試作）。駒を動かすたびに動く数字なので、周りより一段強く出す */
@@ -759,8 +738,34 @@
     display: flex; flex-direction: column; gap: 6px;
     box-shadow: inset 0 1px 0 #ffffff10, 0 -3px 10px #00000044;
   }
-  #shopTitle { display: flex; justify-content: space-between; align-items: baseline; font-size: 10.5px; font-weight: 700; color: var(--parchment-dim); padding: 0 2px; gap: 6px; }
-  #shopName, #incomeNote { white-space: nowrap; }
+  /* 見出し行。左=店名／中=控えの顔／右=利子の予告（2段）。
+     ⚠️ **高さは常に一定に保つこと。** 控えが空でも枠を描き、利子も必ず2行にしてある。
+       条件で行数が変わると #shopArea が伸縮して**盤が拡大縮小して見える**（過去に踏んだ） */
+  #shopTitle { display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; font-weight: 700; color: var(--parchment-dim); padding: 0 2px; gap: 6px; }
+  #shopName { white-space: nowrap; flex: none; }
+  #incomeNote { white-space: nowrap; flex: none; text-align: right; line-height: 1.25; font-size: 9.5px; }
+  #incomeNote i { font-style: normal; opacity: .7; }
+  /* 控えの顔。募兵の見出し行の**空きスペース**を使う（専用の行を足すと盤が縮む） */
+  #benchSlots { display: flex; gap: 3px; flex: 1 1 auto; justify-content: flex-start; min-width: 0; }
+  .bslot {
+    width: 22px; height: 24px; flex: none; position: relative;
+    border-radius: 4px; border: 1px dashed #ffffff44; background: #00000038;
+    display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
+  }
+  /* 空き枠にも 🪑 を薄く入れる。**枠だけだと「そこに何かある」と気づけない**
+     （前の版が「分かりにくい」と言われた原因がこれ） */
+  .bslot:not(.has)::after {
+    content: '🪑'; font-size: 11px; opacity: .3; line-height: 24px;
+  }
+  .bslot.has { border-style: solid; border-color: #ffffff33; background: #3a2a18; cursor: pointer; }
+  .bslot.has.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 6px #e8b33d66; }
+  .bslot.has:active { transform: translateY(1px); }
+  .bface { width: 22px; height: 24px; object-fit: cover; object-position: 50% 12%;
+           image-rendering: pixelated; }
+  .bslot b {
+    position: absolute; right: 0; top: -1px; font-size: 8px; color: #ffe9a8;
+    text-shadow: 0 1px 2px #000, 0 0 3px #000;
+  }
   /* 募兵のTier出現率。募兵カードの真上に独立した行として置く（幅の狭い端末でも
      見出し行を圧迫しない）。中身が空＝宴・チュートリアル・戦闘中は行ごと消える */
   #tierOdds { display: flex; gap: 3px; padding: 1px 2px 0; }

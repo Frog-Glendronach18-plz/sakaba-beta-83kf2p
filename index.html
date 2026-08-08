@@ -104,7 +104,13 @@ try {
     <div id="synergy"></div>
 
     <div id="shopArea">
-      <div id="shopTitle"><span id="shopName">🍺 酒場の募兵</span><span id="incomeNote"></span></div>
+      <!-- 見出し行 = 店名 ／ 控えの顔（空きスペースを使う） ／ 利子の予告（2段）。
+           高さは常に一定（控えが空でも枠は出す）＝盤が跳ねない -->
+      <div id="shopTitle">
+        <span id="shopName">🍺 酒場の募兵</span>
+        <span id="benchSlots"></span>
+        <span id="incomeNote"></span>
+      </div>
       <div id="tierOdds"></div>
       <!-- 募兵カードと実況ログは同じ枠に重ねる（#shopStage）。高さは常にカード側が決める（CSS参照） -->
       <div id="shopStage">
